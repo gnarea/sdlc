@@ -1,8 +1,4 @@
-# Instrumentation
-
-Instrumentation MUST be emitted through a vendor-neutral API, with the exporter chosen at start-up and hidden behind an adapter, so that no vendor's types appear elsewhere. A library MUST leave that choice to the application embedding it.
-
-On a device the user controls, telemetry data MUST stay on the device unless the user opts in. Every destination MUST be documented.
+# Telemetry
 
 ## Logs
 
@@ -13,11 +9,10 @@ On a device the user controls, telemetry data MUST stay on the device unless the
   - `warn`: Something went wrong and the software absorbed it, so nobody was denied what they asked for. It needs attention, but not now.
   - `error`: Something went wrong that the software could not absorb, so a user or a caller was denied what they asked for. It needs attention at once.
   - `fatal`: The process cannot continue, and is terminating.
-- Field names MUST be consistent across the codebase, because they are the only thing a query can join on.
+- Field names MUST be consistent across the system, because they are the only thing a query can join on.
 - Fields shared by more than one message SHOULD be documented, along with what each one lets an operator trace.
 - Every decision to refuse, drop, or degrade MUST be logged exactly once, with the reason as a field.
-- A failure MUST be logged where its outcome is decided, and MUST NOT be logged again at each level it propagates through.
-- Personally identifiable data SHOULD NOT be logged above `debug`, and secrets MUST NOT be logged at all.
+- Personal data SHOULD NOT be logged above `debug`, and secrets MUST NOT be logged at all.
 - Message strings and field names are what an operator greps and an alert matches. Where a test or an alert matches on one, it SHOULD NOT be reworded unless the meaning it conveys has changed.
 
 ## Metrics

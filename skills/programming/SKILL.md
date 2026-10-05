@@ -46,6 +46,7 @@ description: How code should be written regardless of language. Code organisatio
 - Failures that the caller is expected to reason about MUST be returned as values (e.g., a result type carrying the reason). Programming errors and protocol violations MUST be raised.
 - The cause MUST always be chained. Discarding a cause MUST be syntactically deliberate.
 - Third-party errors MUST NOT escape the module that provoked them: catch them and re-raise them in the module's own vocabulary.
+- A failure MUST be logged where its outcome is decided, and MUST NOT be logged again at each level it propagates through.
 - The documentation of each error type MUST tell the caller what to do about it, starting with whether retrying is likely to help.
 - Messages MUST state the expectation and the offending value (e.g., "TTL exceeds the maximum (got 3600)"), and MUST NOT carry secrets or personal data.
 - Where a test asserts on the text of a message, that wording is part of what the module promises, and MUST NOT be reworded unless the meaning it conveys has changed.
@@ -54,34 +55,29 @@ description: How code should be written regardless of language. Code organisatio
 
 - Every operation that can be repeated MUST be safe to repeat.
 - Where a sequence of side effects cannot be atomic, it MUST be ordered so that a retry after any partial failure converges on the intended state, and a comment MUST explain why that order was chosen.
-- Input that can never be processed successfully MUST be dropped and recorded, never retried.
+- A write MUST rely on a uniqueness constraint in the store to reject a duplicate, rather than check for an existing record first, because two matching writes can happen at once.
 - The process MUST be able to die at any point without corrupting what it owns, and MUST recover from durable state rather than from anything held in memory.
-- Where the platform asks the process to stop (e.g., SIGTERM), the process MUST stop accepting work and exit within the grace period it's given.
 
 ## Security and privacy
 
 ### Trust boundaries
 
 - Input crossing a trust boundary MUST be validated before use, including the responses of services we operate and of those we don't.
-- Every untrusted input MUST have an explicit size limit, and every outbound call MUST have a timeout. Both MUST be named constants, and where the figure was derived rather than chosen, the derivation MUST be commented.
+- Every untrusted input MUST have an explicit size limit and a deadline for arriving in full, and every outbound call MUST have a timeout. Each MUST be a named constant, and where the figure was derived rather than chosen, the derivation MUST be commented.
 - A value that a security decision depends on MUST be re-validated wherever it re-enters the code, even where it was validated when it was issued.
 - Where the input or the configuration is ambiguous or incomplete, the code MUST fail closed and refuse to proceed, rather than guess what was intended.
 - A security control MUST NOT have an off switch. Where skipping it would be legitimate, offer a narrower operation that does less, rather than a flag that checks less.
 - Secrets MUST NOT be written to disc, nor interpolated into a message. A credential scoped to a single run MUST be generated per run and held in memory.
-- The software MUST request the fewest capabilities and permissions it can function with, and each MUST be justified in the README.
 
 ### Personal data
 
-- Personal data MUST be collected only where a stated requirement needs it, and MUST be passed to the fewest modules that can do the job. It MUST NOT be carried in a context object that every layer can read.
-- Retention MUST be enforced by the store that holds the data, never by a routine that can silently stop running.
-- An identifier MUST NOT be given to a party that doesn't need it, especially where it would let that party correlate a person across contexts.
-- Identifiers exposed to third parties MUST NOT be guessable, and MUST NOT leak the time or the volume of what they identify (e.g., a UUIDv4, rather than a sequential or timestamp-derived database ID).
-- Telemetry, analytics, and crash reporting MUST NOT be added without explicit approval. Every host the software contacts MUST be enumerated in its documentation, with the reason.
+- Personal data MUST be passed to the fewest modules that can do the job, and MUST NOT be carried in a context object that every layer can read.
 
 ## Dependencies and performance
 
 - A new dependency, internal or external, MUST be justified against what the platform already offers. Where only an older, still-supported platform version lacks it, the code SHOULD degrade gracefully rather than take the dependency.
 - The faster option MUST be taken where it costs nothing in clarity. Where clarity is traded away, the change MUST cite the measurement that justified it.
+- Instrumentation MUST be emitted through a vendor-neutral API, with the exporter chosen at start-up and hidden behind an adapter, so that no vendor's types appear elsewhere. A library MUST leave that choice to the application embedding it.
 - Synchronous I/O MUST NOT block a path that serves a request or a user interface.
 - Setup that only some code paths need MUST run when those paths run, rather than when the module loads. An implementation chosen at runtime, such as a storage or key-management adapter, MUST be loaded only after it has been chosen.
 
@@ -92,7 +88,7 @@ description: How code should be written regardless of language. Code organisatio
 - Tests of the same unit whose arrange, act, and assert (AAA) blocks overlap substantially MUST be generated dynamically from data (aka _parameterised testing_).
 - Where a parameterised suite supplies the unit under test as a case parameter, each case MUST assert something that distinguishes it from the others.
 - **Private/internal** functions, procedures, and the like SHOULD NOT be unit tested directly: test them through the public/exported counterparts that use them. Where visibility is widened for testability, that concession MUST be documented on the member.
-- Tests SHOULD use real dependencies, including databases and cryptographic operations, rather than test doubles. Where the real thing is used, each test run MUST get its own isolated instance or namespace.
+- Tests SHOULD use real dependencies, including cryptographic operations, rather than test doubles.
 - Test doubles MUST be confined to the I/O boundary and to sources of non-determinism. Mocks and spies MUST NOT be used to make one of our own units testable: a unit that needs them MUST be redesigned instead.
 - Where a double is unavoidable, it MUST be a working implementation whose failures are injected explicitly, and whose state is exposed so that tests assert on outcomes rather than on interactions.
 - A test that replaces a collaborator with a double MUST assert on the arguments that the double was given, because coverage doesn't check that a caller passes what the callee expects.
@@ -109,16 +105,13 @@ description: How code should be written regardless of language. Code organisatio
 
 ## Additional guidelines
 
-Read a reference below where its condition holds; its rules apply in addition to the ones above.
-
 ### By artefact
 
-- `references/libraries.md`: The repository publishes a package that other codebases depend on.
-- `references/server-side-apps.md`: The repository produces a service that runs on infrastructure we operate, reached over a network.
-- `references/end-user-apps.md`: The repository produces an application installed on a device the user controls, whether desktop or mobile.
+- [Published libraries](references/libraries.md): The repository publishes a package that other codebases depend on.
+- [Server-side applications](references/server-side-apps.md): The repository produces an application that runs on servers.
+- [End-user applications](references/end-user-apps.md): The repository produces an application installed on a device the user controls.
 
 ### By concern
 
-- `references/instrumentation.md`: The change adds, removes, or alters a diagnostic signal that the running process emits.
-- `references/cryptography.md`: The change selects, configures, or invokes a cryptographic primitive, or handles a key, a credential, or a token.
-- `references/prototyping.md`: The artefact is a throwaway prototype.
+- [Cryptography](references/cryptography.md): The change uses a cryptographic primitive, or handles a key, a credential, or a token.
+- [Prototyping](references/prototyping.md): The artefact is a throwaway prototype.
