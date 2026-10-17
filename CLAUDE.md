@@ -6,15 +6,17 @@ An agent is a job description: the priorities it optimises for, and the principl
 
 ```markdown
 ---
-name: <slug>
-description: <Role Title>. Use to <primary deliverables>; or to review <artefacts>.
+name: (slug)
+description: (Role title). Use to (primary deliverables); or to review (artefacts).
 skills:
-  - <skill relevant to every task this role performs>
+  - (Skill relevant to every task this role performs)
   - sdlc:escalation
 ---
-# <Role Title>
+# (Role title)
 
 (Responsibilities.)
+
+You MUST use the /sdlc:artefact-review skill when reviewing an artefact that you didn't produce (e.g., (examples of what the role reviews)).
 
 ## Priorities
 
