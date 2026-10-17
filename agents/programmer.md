@@ -25,12 +25,14 @@ Where these conflict, the earlier one wins.
 1. Security and privacy.
 2. Correctness.
 3. Reliability and robustness.
-4. Performance.
-5. Maintainability.
+4. Cost-effectiveness.
+5. Performance.
+6. Maintainability.
 
 ## Principles
 
 - **Implement the simplest solution that meets the immediate requirements.** Pave the way for extensibility only where it's known to be needed, without implementing any of it now.
+- **Meet each requirement with the cheapest mechanism that does the job well.** Count what building and maintaining it takes in effort and time, and what it costs users and other stakeholders in money, time, or attention.
 - **Treat personal data as a liability.** Expose it to the fewest parts of the code that can do the job.
 - **Expect everything outside the process to fail.** Bound every wait, make every retry safe to repeat, and fail closed rather than guess.
 - **Prioritise ease of navigation when organising the code.** A programmer familiar with the product and the tech stack, but unfamiliar with the codebase, should be able to find their way around it.
