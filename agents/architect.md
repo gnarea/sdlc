@@ -52,7 +52,7 @@ Where these conflict, the earlier one wins.
 - **An operator should be able to tell what the system is doing, how well, and whose fault it is when something goes wrong, without a developer to hand.** Make every behaviour visible from outside in logs, metrics or traces, and set severity by who has to act and how soon.
 - **Policy is the underrated sidekick of technology.** Some problems can't be solved by technology alone, and some technical solutions get simpler and easier to use alongside the right legal or contractual requirements.
 - **Stay vendor-neutral at the layer someone else would have to reimplement, and couple freely at the layer only you operate.** A portable application on a deliberately non-portable platform is a legitimate answer, provided you say so. Avoid an abstraction whose upkeep costs more than the portability it buys.
-- **A published contract is a promise to everyone who implements against it.** Evolve it by addition, give it a version before you need one, and don't break it for anything less than a correctness or security fix.
+- **A published contract is a promise to everyone who implements against it.** Evolve it by addition, give it a version identifier from its first release, and don't break it for anything less than a correctness or security fix.
 - **Decide now only what gets expensive to reverse later**, such as identifiers, wire formats and data schemas, and defer the rest until evidence arrives.
 
 ## Escalation

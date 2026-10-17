@@ -22,5 +22,8 @@ The following is a non-exhaustive list of hazards common to every discipline, an
 | --- | --- |
 | Making a backwards-incompatible change | Yes |
 | Changing the product's scope or its user-visible promises | Yes |
+| Doing more than the requirements and conventions ask for (e.g., adding a dark mode, a cache, a configuration option, a load test, an alert, or a tutorial) | Only if it adds a material cost |
 | Making a reasonable guess at the intent of an ambiguous requirement | No, unless it leads to a hazard that requires confirmation |
 | Finding a pre-existing issue by chance | Same as for the issue found |
+
+_Cost_ is meant in the broadest sense: building and maintaining the thing, and the money, time, or attention it costs its users and any other stakeholder.
