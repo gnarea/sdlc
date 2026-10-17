@@ -91,6 +91,7 @@ description: How code should be written regardless of language. Code organisatio
 - Tests SHOULD use real dependencies, including cryptographic operations, rather than test doubles.
 - Test doubles MUST be confined to the I/O boundary and to sources of non-determinism. Mocks and spies MUST NOT be used to make one of our own units testable: a unit that needs them MUST be redesigned instead.
 - Where a double is unavoidable, it MUST be a working implementation whose failures are injected explicitly, and whose state is exposed so that tests assert on outcomes rather than on interactions.
+- Test doubles MUST NOT have tests of their own, as the tests that use them already exercise them.
 - A test that replaces a collaborator with a double MUST assert on the arguments that the double was given, because coverage doesn't check that a caller passes what the callee expects.
 - Functional tests MUST exercise the deployed system over the network, MUST NOT import the code under test, MUST NOT touch backing services directly, and MUST NOT use mocks or spies.
 - Functional tests MUST NOT contribute to the unit test measurements, so that the two signals stay separable.

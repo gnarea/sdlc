@@ -14,5 +14,5 @@ The contract is the product.
 
 ## Testing
 
-- Test doubles that consumers will need MUST ship inside the library, held to the same standards as the rest of it.
+- Test doubles that consumers will need MUST ship inside the library, held to the same standards as the rest of it, except that, like any other double, they MUST NOT have tests of their own.
 - Tests MUST run against the oldest platform version that the library claims to support, and on every operating system it claims to support.
