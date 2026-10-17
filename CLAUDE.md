@@ -10,6 +10,7 @@ name: <slug>
 description: <Role Title>. Use to <primary deliverables>; or to review <artefacts>.
 skills:
   - <skill relevant to every task this role performs>
+  - sdlc:escalation
 ---
 # <Role Title>
 
@@ -25,7 +26,7 @@ skills:
 
 ## Escalation
 
-(When and how to escalate issues to the user or parent agent.)
+(Hazards specific to the role's domain, in the same format as those in the escalation skill.)
 ```
 
 ## Skills
