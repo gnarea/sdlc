@@ -106,7 +106,7 @@ description: How code should be written regardless of language. Code organisatio
 
 ## Documentation
 
-- A document (e.g., a spec, a README) MUST state its conclusions, leaving out how they were reached, and SHOULD give the reasoning behind one only where the reader needs it to trust or challenge it (e.g., a consequential decision).
+- A document (e.g., a spec) MUST state its conclusions, leaving out how they were reached, and SHOULD give the reasoning behind one only where the reader needs it to trust or challenge it (e.g., a consequential decision).
 
 ## Additional guidelines
 
