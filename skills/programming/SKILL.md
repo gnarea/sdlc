@@ -104,6 +104,10 @@ description: How code should be written regardless of language. Code organisatio
 - `TODO`, `FIXME`, and `HACK` markers MUST NOT be committed. Track the work in the issue tracker instead.
 - A suppression of an automated check MUST be at the narrowest scope the tool offers, placed at the line it excuses, and MUST state its reason. Where the reason is an upstream defect, the suppression MUST link to it.
 
+## Documentation
+
+- A document (e.g., a spec, a README) MUST state its conclusions, leaving out how they were reached, and SHOULD give the reasoning behind one only where the reader needs it to trust or challenge it (e.g., a consequential decision).
+
 ## Additional guidelines
 
 ### By artefact

@@ -1,6 +1,6 @@
 # Documenting a system's architecture
 
-An architecture is documented so that another architect, who could be a person, can assess it. What the design costs other stakeholders (e.g., a residual risk, a limitation with no workaround) MUST be called out in the documents below.
+An architecture is documented so that another architect, who could be a person, can assess it. Each document MUST state its conclusions, leaving out how they were reached, and SHOULD give the reasoning behind one only where the reader needs it to trust or challenge it (e.g., a consequential decision). What the design costs other stakeholders (e.g., a residual risk, a limitation with no workaround) MUST be called out in the documents below.
 
 ## The architecture document
 
@@ -34,7 +34,7 @@ It MUST cover the adversaries and their capabilities, including any capability t
 
 A change spec specifies a delta to the system's architecture: what the change adds, alters, or removes. The starting point is the architecture as it stands, which is nothing in a new system. It MUST use the medium that suits the change (e.g., an issue, an RFC). When writing one, the change spec template SHOULD be used as a guide, not as a strict template. When reviewing one, it MUST be judged on whether it provides what's needed to assess the change, whatever its structure.
 
-- The spec MUST cover every element that the change adds or alters in enough detail to be built and reviewed without guesswork: everything about an element it adds, and only what changes about one it alters. For example:
+- The spec MUST cover every element that the change adds or alters in enough detail to be assessed: everything about an element it adds, and only what changes about one it alters. For example:
   - For each exchange: whether it's asynchronous, synchronous, or a stream (and, if synchronous, why it can't be asynchronous), the protocol, the message schema, authentication, size limits, timeouts, the retry policy (backoff, jitter, and whether it's capped by attempts or by time), and what happens once retries are exhausted.
   - For each endpoint that accepts traffic: rate limits, quotas, and other protections against abuse.
   - For each store: the schema, indices, uniqueness constraints, retention and what enforces it, who can read it, and whether it's backed up.

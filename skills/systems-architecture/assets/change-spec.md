@@ -20,7 +20,7 @@
 
 ## (Decision, as a statement of what's chosen)
 
-(Whatever it specifies, in enough detail to be built and reviewed without guesswork. What it optimises for, at the expense of what, and its second-order consequences. The alternatives considered, and why each was rejected. Any open question that blocks it.)
+(Whatever it specifies, in enough detail to be assessed. What it optimises for, at the expense of what, and its second-order consequences. The alternatives considered, and why each was rejected. Any open question that blocks it.)
 
 (A decision that follows from this one nests under it. An element that several decisions shape is specified once, and referred to from the others. A message format is declared in the notation closest to its wire format, marking what's added, altered, or removed. An amendment to the architecture document is a decision of its own.)
 
