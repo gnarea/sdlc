@@ -28,6 +28,7 @@ description: How to design systems beyond the boundary of the OS process. Scope,
 - Every piece of data that is stored MUST have a purpose, a set of readers, and a retention period, and the store SHOULD enforce the retention period (e.g., with a TTL index).
 - Personal data MUST NOT be replicated to a system with weaker retention, access control, or jurisdiction than its source.
 - Personal data MUST NOT be shared with a party that doesn't need it, especially where it would let that party correlate a person across contexts.
+- Personal data MUST be passed to the fewest modules that can do the job, and MUST NOT be carried in a context object that every layer can read.
 - Identifiers exposed to third parties MUST NOT be guessable, and MUST NOT leak the time or the volume of what they identify (e.g., a UUIDv4, rather than a sequential or timestamp-derived database ID).
 - A store that holds original data MUST be backed up. A store whose data can be rebuilt reliably and cheaply from original data (e.g., a search index) needn't be, unless a backup serves a purpose that rebuilding can't.
 - Idempotency SHOULD come from natural keys and a uniqueness constraint. Where the work has no natural key (e.g., a payment), or is too costly to repeat, a record of what was already done (e.g., the identifiers of the messages processed) MAY be kept instead.
@@ -36,6 +37,7 @@ description: How to design systems beyond the boundary of the OS process. Scope,
 
 - Asynchronous messaging MUST be the default, because a message that is durably stored can be retried, redelivered, or dead-lettered after any failure, whereas request-response ties each component's availability to the others'. Request-response MUST be used only where the exchange can't be made asynchronous (e.g., a third-party API that only offers it).
 - Every exchange MUST tolerate the other party being unreachable.
+- Each party to an exchange MUST be conservative in what it sends. In what it receives, it MUST tolerate whatever doesn't matter to it, and MUST refuse a message that violates the contract in anything that does.
 - Whatever is acknowledged (e.g., a message, an item in a stream) MUST be acknowledged only once it's safe for the sender to forget: durably stored and flushed (e.g., with `fdatasync`), or fully processed, rather than merely received or parsed.
 - Every message, whether exchanged synchronously or asynchronously, MUST carry the version of its format from its first release, because a version can't be retrofitted once messages are in use. The version MAY travel as metadata rather than in the payload (e.g., in the media type, such as `application/vnd.example.order.v1+json`).
 - Work that many parties start at once (e.g., on a schedule, in response to the same event) MUST be spread with random jitter, so that they don't act in lockstep.
@@ -96,7 +98,7 @@ Where anonymity or deniability is a requirement:
 - Whatever collects, stores, or alerts on telemetry (e.g., a log aggregator, a paging service) MUST be deemed a backing service.
 - The design MUST decide how telemetry leaves each process (e.g., written to standard output for the platform to collect, pushed to a collector), so that no component depends on where it ends up.
 - Every operation that the threat model expects to be abused MUST be measured in the product's own terms (e.g., accounts created per hour), with an alert on departures from the norm.
-- Where privacy is a requirement, observability MUST be derived from the threat model: record what's needed to detect and troubleshoot abuse, and nothing that could identify a user.
+- Observability MUST be derived from the threat model: record what's needed to detect and troubleshoot abuse, and no more about users than the privacy requirements allow (e.g., nothing that could identify one, where users must be anonymous).
 - Configuration options SHOULD be kept to a minimum, and each default MUST be safe for every deployment.
 
 ## Integration testing
@@ -123,9 +125,12 @@ Where anonymity or deniability is a requirement:
   - [Contracts between systems](references/contracts.md): The change defines or alters a contract that another system, team, or organisation depends on.
 - [Telemetry](references/telemetry.md): The design affects a diagnostic signal that the system emits.
 - [Denial of service and abuse](references/abuse.md): An entry point is reachable by untrusted parties.
+- [Cryptography](references/cryptography.md): The design involves a cryptographic key, or a value that has to be unpredictable (e.g., a nonce).
 - [Cloud infrastructure](references/cloud-infrastructure.md): The change provisions or alters infrastructure at a cloud provider.
 - [Documenting a system's architecture](references/documentation.md): The design, or a change to it, is being documented or specified.
 - [Prototyping](references/prototyping.md): The artefact is a prototype built to answer a design question.
+
+See also the /sdlc:protocol-design skill when designing or altering a protocol, or a protocol specification.
 
 ### Templates
 

@@ -60,18 +60,12 @@ description: How code should be written regardless of language. Code organisatio
 
 ## Security and privacy
 
-### Trust boundaries
-
 - Input crossing a trust boundary MUST be validated before use, including the responses of services we operate and of those we don't.
 - Every untrusted input MUST have an explicit size limit and a deadline for arriving in full, and every outbound call MUST have a timeout. Each MUST be a named constant, and where the figure was derived rather than chosen, the derivation MUST be commented.
 - A value that a security decision depends on MUST be re-validated wherever it re-enters the code, even where it was validated when it was issued.
 - Where the input or the configuration is ambiguous or incomplete, the code MUST fail closed and refuse to proceed, rather than guess what was intended.
 - A security control MUST NOT have an off switch. Where skipping it would be legitimate, offer a narrower operation that does less, rather than a flag that checks less.
 - Secrets MUST NOT be written to disc, nor interpolated into a message. A credential scoped to a single run MUST be generated per run and held in memory.
-
-### Personal data
-
-- Personal data MUST be passed to the fewest modules that can do the job, and MUST NOT be carried in a context object that every layer can read.
 
 ## Dependencies and performance
 
