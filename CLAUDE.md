@@ -20,7 +20,7 @@ skills:
 
 (Responsibilities.)
 
-You MUST use the /sdlc:artefact-review skill when reviewing an artefact that you didn't produce (e.g., (examples of what the role reviews)), and when processing feedback on an artefact that you produced.
+Before you review an artefact that you didn't produce (e.g., (examples of what the role reviews)), or process feedback on an artefact that you produced, you MUST load the `artefact-review` skill and follow it.
 
 ## Priorities
 
@@ -32,7 +32,7 @@ You MUST use the /sdlc:artefact-review skill when reviewing an artefact that you
 
 ## Escalation
 
-(Hazards specific to the role's domain, in the same format as those in the escalation skill.)
+(Hazards specific to the role's domain, in the same format as those in the `escalation` skill.)
 ```
 
 ## Skills
@@ -43,6 +43,8 @@ Anything prescriptive (conventions, workflows, templates, checklists) belongs in
 
 - Agents and skills MUST NOT name another agent, a role, or a person, so that they compose with any caller.
 - Agents and skills MUST NOT assume any development process or tooling, so that they compose with any harness.
+- Agents MUST list each skill under `skills:` with its plugin prefix (e.g., `sdlc:escalation`), since Claude Code otherwise loads the skill of that name from whichever plugin it loaded first.
+- Agents MUST tell the model to load any other skill before the task that it covers (e.g., "Before you review (…), you MUST load the `artefact-review` skill"), since Sonnet 5.5 often skips a skill that it's only told to use.
 - Every instruction MUST come from how I work, rather than from received wisdom.
 - When changing an agent or skill, you MUST consider whether its counterpart (e.g., the `programming` skill for the `programmer` agent) needs a matching change.
 - You MUST observe the /ghost-writing:ghost-writing skill.

@@ -4,7 +4,7 @@ description: How to design protocols, including cryptographic ones. Use when des
 ---
 # Protocol design
 
-A _protocol_ is the messages that two or more parties exchange, and the rules for exchanging them. This skill extends the /sdlc:systems-architecture skill, which applies in full, and only covers what changes when the design subject is a protocol.
+A _protocol_ is the messages that two or more parties exchange, and the rules for exchanging them. This skill extends the `systems-architecture` skill, which applies in full, and only covers what changes when the design subject is a protocol.
 
 ## Scope
 

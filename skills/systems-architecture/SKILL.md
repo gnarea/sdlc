@@ -130,7 +130,7 @@ Where anonymity or deniability is a requirement:
 - [Documenting a system's architecture](references/documentation.md): The design, or a change to it, is being documented or specified.
 - [Prototyping](references/prototyping.md): The artefact is a prototype built to answer a design question.
 
-See also the /sdlc:protocol-design skill when designing or altering a protocol, or a protocol specification.
+See also the `protocol-design` skill when designing or altering a protocol, or a protocol specification.
 
 ### Templates
 
