@@ -128,7 +128,6 @@ Where anonymity or deniability is a requirement:
 - [Cryptography](references/cryptography.md): The design involves a cryptographic key, or a value that has to be unpredictable (e.g., a nonce).
 - [Cloud infrastructure](references/cloud-infrastructure.md): The change provisions or alters infrastructure at a cloud provider.
 - [Documenting a system's architecture](references/documentation.md): The design, or a change to it, is being documented or specified.
-- [Prototyping](references/prototyping.md): The artefact is a prototype built to answer a design question.
 
 See also the `protocol-design` skill when designing or altering a protocol, or a protocol specification.
 

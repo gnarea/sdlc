@@ -113,4 +113,3 @@ description: How code should be written regardless of language. Code organisatio
 ### By concern
 
 - [Cryptography](references/cryptography.md): The change uses a cryptographic primitive, or handles a key, a credential, or a token.
-- [Prototyping](references/prototyping.md): The artefact is a throwaway prototype.

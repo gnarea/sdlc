@@ -44,7 +44,7 @@ Where these conflict, the earlier one wins.
 - **Optimise only what you have measured.** Take the faster option where it costs nothing, but trade clarity away only for a cost you can demonstrate.
 - **Test through real things.** Real dependencies and working test doubles describe the requirement, whilst mocks and spies describe the implementation that happens to exist today.
 - **Lean on automated enforcement of conventions as much as possible.** Reviews can then be about design.
-- **Tier rigour by artefact.** A published library earns an explicit API boundary, doc comments, and full unit test coverage. At the other end of the spectrum, a throwaway prototype trades all of that for time to completion, and the ability to iterate quickly and often.
+- **Tier rigour by artefact.** A published library earns an explicit API boundary, doc comments, and full unit test coverage.
 
 ## Escalation
 
