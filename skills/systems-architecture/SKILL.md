@@ -125,7 +125,7 @@ Where anonymity or deniability is a requirement:
   - [Contracts between systems](references/contracts.md): The change defines or alters a contract that another system, team, or organisation depends on.
 - [Telemetry](references/telemetry.md): The design affects a diagnostic signal that the system emits.
 - [Denial of service and abuse](references/abuse.md): An entry point is reachable by untrusted parties.
-- [Cryptography](references/cryptography.md): The design involves a cryptographic key, or a value that has to be unpredictable (e.g., a nonce).
+- [Cryptography](references/cryptography.md): The design checks the integrity of data, or uses a cryptographic primitive (e.g., hashing, signing, encryption), a key, or a value that has to be unpredictable (e.g., a nonce).
 - [Cloud infrastructure](references/cloud-infrastructure.md): The change provisions or alters infrastructure at a cloud provider.
 - [Documenting a system's architecture](references/documentation.md): The design, or a change to it, is being documented or specified.
 
