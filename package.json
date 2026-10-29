@@ -1,0 +1,8 @@
+{
+  "name": "sdlc",
+  "private": true,
+  "license": "MIT",
+  "pi": {
+    "skills": ["./skills"]
+  }
+}
