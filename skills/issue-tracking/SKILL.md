@@ -8,8 +8,6 @@ description: Guidelines for creating, updating, closing, or replying to issues/t
 
 You MUST avoid creating a duplicate. Search the tracker for potential duplicates, covering both open and closed issues. If a match exists, you SHOULD add any new and relevant information as a comment; if the match is closed, you SHOULD reopen it or file a follow-up.
 
-You MUST observe the `ghost-writing` skill with semi-formal tone when creating an issue.
-
 When filing bug reports or feature requests, you MUST use the language that a power user of the product would use, although you MAY include relevant environmental and/or implementation details at the bottom of the description if known.
 
 ### Issue title
@@ -77,10 +75,6 @@ You MUST ensure that the description reflects our current understanding of the i
 - Say what changed and how it was verified, linking to the change that resolved it.
 - Close as "not planned", or the tracker's equivalent, when the issue will not be acted upon, and give the reason.
 
-# Comment authoring
-
-Every comment you write or edit MUST observe the `ghost-writing` skill with informal tone.
-
 # User sign-off
 
-You MUST obtain user sign-off before performing any write operation on the issue tracker on their behalf. Unless told not to, you MUST present the ghost-written content to the user for sign-off.
+You MUST obtain user sign-off before performing any write operation on the issue tracker on their behalf. Unless told not to, you MUST present what you intend to write to the user for sign-off.
