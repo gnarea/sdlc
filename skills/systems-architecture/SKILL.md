@@ -66,6 +66,7 @@ description: How to design systems beyond the boundary of the OS process. Scope,
 - The parties that stakeholders must trust, and what they must trust them with, MUST be minimised. Where trust can't be designed out, how the trusted party operates the system MUST be open to outside scrutiny (e.g., by publishing the infrastructure code).
 - Every host that the system contacts MUST be enumerated in its documentation, with the reason.
 - Unsafe use of an API, a wire format, or a deployment's configuration MUST be impossible: no skipping a check, turning off a security property, or downgrading. Where a choice is unavoidable, offer a few named options, all of them safe.
+- The system MUST cap how long each credential that it issues (e.g., an API key, a certificate) can be valid, as low as its use cases allow, because a compromised credential remains usable until it expires, unless the compromise is noticed and every verifier can check for revocation.
 
 ### Anonymity
 
@@ -125,7 +126,7 @@ Where anonymity or deniability is a requirement:
   - [Contracts between systems](references/contracts.md): The change defines or alters a contract that another system, team, or organisation depends on.
 - [Telemetry](references/telemetry.md): The design affects a diagnostic signal that the system emits.
 - [Denial of service and abuse](references/abuse.md): An entry point is reachable by untrusted parties.
-- [Cryptography](references/cryptography.md): The design involves a cryptographic key, or a value that has to be unpredictable (e.g., a nonce).
+- [Cryptography](references/cryptography.md): The design checks the integrity of data, or uses a cryptographic primitive (e.g., hashing, signing, encryption), a key, or a value that has to be unpredictable (e.g., a nonce).
 - [Cloud infrastructure](references/cloud-infrastructure.md): The change provisions or alters infrastructure at a cloud provider.
 - [Documenting a system's architecture](references/documentation.md): The design, or a change to it, is being documented or specified.
 

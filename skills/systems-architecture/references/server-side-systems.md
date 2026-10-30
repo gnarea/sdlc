@@ -27,7 +27,3 @@
 ## Data
 
 - Indices MUST be specified with the schema, including the uniqueness constraints that make retries safe and the expiry that enforces retention.
-
-## Keys
-
-- A long-term private key MUST be generated and used inside a key management service, backed by hardware where the provider offers it, so that the key never reaches an instance.

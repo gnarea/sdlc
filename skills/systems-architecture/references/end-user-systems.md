@@ -16,7 +16,7 @@
 - Data MUST stay on the device unless a stated requirement needs it elsewhere.
 - Telemetry, analytics, and crash reporting SHOULD NOT be compiled in by default.
 - Telemetry MUST stay on the device unless the user opts in, and every destination MUST be documented.
-- Encryption at rest MUST cover keys and credentials, rooted in the platform's keystore.
+- Encryption at rest MUST cover credentials, rooted in the platform's keystore.
 - Remote backups MUST NOT transmit or store sensitive data (e.g., cryptographic keys, personal data) in the clear.
 
 ## Storage
