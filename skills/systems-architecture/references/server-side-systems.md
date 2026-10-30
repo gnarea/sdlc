@@ -6,6 +6,13 @@
 - Administrative tasks MUST run in dedicated instances of the component that are unreachable from the Internet.
 - Every instance MUST declare limits on the resources it can consume (e.g., CPU, memory), and MUST run with no more operating system privileges than it needs (e.g., as an unprivileged user, on a read-only filesystem).
 
+## Tenancy
+
+Where the system serves more than one _tenant_ (e.g., each customer organisation of a SaaS product):
+
+- Each tenant MUST be isolated from the others as far as is cost-effective, so that a breach, a bug, or a surge of load in one tenant affects as few of the others as possible.
+- Where the system is offered as a service, isolation is a spectrum. At one end, the service provisions a deployment for each tenant, with its own backing services; at the other, one deployment serves every tenant, and they share all of its resources. In between, a shared deployment MAY give some tenants dedicated resources (e.g., a key in the key management service, an object store bucket), such as to keep their data in a jurisdiction, or to stop one tenant's load from degrading the others' service (aka the _noisy neighbour_ problem).
+
 ## Configuration
 
 - Each configuration option SHOULD reach an instance as an environment variable. Configuration files SHOULD NOT be used.
