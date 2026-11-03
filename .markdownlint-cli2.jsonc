@@ -1,0 +1,12 @@
+{
+  "config": {
+    // Each paragraph and list item is on a line of its own.
+    "line-length": false,
+    // H1s mark sections, as in the issue templates and the change spec template, so a document may have several or start with none.
+    "single-h1": false,
+    "first-line-h1": false,
+    "emphasis-style": { "style": "underscore" }
+  },
+  "globs": ["**/*.md"],
+  "gitignore": true
+}

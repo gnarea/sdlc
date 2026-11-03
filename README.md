@@ -8,7 +8,7 @@ _Endgame:_ to offload as much as I can to the LLM, so I can operate a "dark soft
 
 Install it from [my marketplace](https://github.com/gnarea/clone):
 
-```
+```text
 /plugin marketplace add gnarea/clone
 /plugin install sdlc@gnarea
 ```

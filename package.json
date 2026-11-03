@@ -3,6 +3,24 @@
   "private": true,
   "license": "MIT",
   "pi": {
-    "skills": ["./skills"]
+    "skills": [
+      "./skills"
+    ]
+  },
+  "scripts": {
+    "spellcheck": "cspell lint --no-progress",
+    "lint": "markdownlint-cli2",
+    "validate:skills": "uv run --locked .github/scripts/validate_skills.py skills",
+    "validate:plugin": "claude plugin validate . && claude plugin validate --strict skills && claude plugin validate --strict agents"
+  },
+  "devDependencies": {
+    "@anthropic-ai/claude-code": "2.1.311",
+    "@cspell/dict-en-common-misspellings": "2.2.5",
+    "@cspell/dict-en-gb-ise": "1.0.38",
+    "cspell": "10.4.0",
+    "markdownlint-cli2": "0.24.0"
+  },
+  "allowScripts": {
+    "@anthropic-ai/claude-code": true
   }
 }
