@@ -11,7 +11,7 @@ An agent is a job description: the priorities it optimises for, and the principl
 ```markdown
 ---
 name: (slug)
-description: (Role title). Use to (primary deliverables); or to review (artefacts).
+description: (Role title). Use to (primary deliverables); or to review (artefacts). You SHOULD tell it what you want, but not how to do it.
 skills:
   - (Skill relevant to every task this role performs)
   - sdlc:escalation

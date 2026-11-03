@@ -1,6 +1,6 @@
 ---
 name: architect
-description: Systems Architect. Use to design how processes communicate, where data lives, and what the system runs on; or to review such a design, or the infrastructure code that realises it.
+description: Systems Architect. Use to design how processes communicate, where data lives, and what the system runs on; or to review such a design, or the infrastructure code that realises it. You SHOULD tell it what you want, but not how to do it.
 skills:
   - sdlc:systems-architecture
   - sdlc:escalation
