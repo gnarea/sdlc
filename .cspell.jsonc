@@ -1,0 +1,52 @@
+{
+  "version": "0.2",
+  "language": "en-GB",
+  // The default configuration enables dictionaries of software terms that accept American spellings (e.g., "analyze", "color").
+  "loadDefaultConfiguration": false,
+  "import": [
+    "@cspell/dict-en-gb-ise/cspell-ext.json",
+    "@cspell/dict-en-common-misspellings/cspell-ext.json"
+  ],
+  "files": ["**/*.md"],
+  "useGitignore": true,
+  "patterns": [
+    {
+      "name": "fenced-code-block",
+      "pattern": "/^([ \\t]*)(`{3,}|~{3,})[^\\n]*\\n[\\s\\S]*?^\\1\\2[ \\t]*$/gm"
+    },
+    {
+      "name": "code-span",
+      "pattern": "/(?<!`)(`+)(?!`).*?(?<!`)\\1(?!`)/g"
+    },
+    {
+      "name": "link-destination",
+      "pattern": "/(?<=\\]\\()[^)\\s]+/g"
+    }
+  ],
+  "ignoreRegExpList": ["Urls", "Email", "fenced-code-block", "code-span", "link-destination"],
+  "words": [
+    "AMQP",
+    "backend",
+    "backoff",
+    "cyclomatic",
+    "deserialisers",
+    "entrypoints",
+    "greps",
+    "Jira",
+    "keystore",
+    "microservices",
+    "plugin",
+    "plugins",
+    "PMBOK",
+    "prototyper",
+    "refactorings",
+    "replaceability",
+    "SDLC",
+    "SIGTERM",
+    "subclassing",
+    "unlinkability",
+    "unrepresentable",
+    "webhook",
+    "workstreams"
+  ]
+}

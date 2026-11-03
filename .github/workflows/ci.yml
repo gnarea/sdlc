@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.2
+          cache: npm
+
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          # The newest uv that this release of setup-uv knows of, so it only changes when setup-uv does.
+          version: latest-known
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          uv sync --locked
+
+      - name: Spellcheck Markdown
+        run: npm run spellcheck
+
+      - name: Lint Markdown
+        run: npm run lint
+
+      - name: Validate skills against the Agent Skills specification
+        run: npm run validate:skills
+
+      - name: Validate plugin with Claude Code
+        run: npm run validate:plugin
