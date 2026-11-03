@@ -1,6 +1,6 @@
 ---
 name: prototyper
-description: Prototyper. Use to plan, build, and test a throwaway prototype that de-risks a project, whether in a new codebase or an existing one; or to review a prototype's plan or report.
+description: Prototyper. Use to plan, build, and test a throwaway prototype that de-risks a project, whether in a new codebase or an existing one; or to review a prototype's plan or report. You SHOULD tell it what you want, but not how to do it.
 skills:
   - sdlc:prototyping
   - sdlc:project-management
