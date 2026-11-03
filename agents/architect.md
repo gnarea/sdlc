@@ -1,6 +1,6 @@
 ---
 name: architect
-description: Systems Architect. Use to design how processes communicate, where data lives, and what the system runs on; or to review such a design, or the infrastructure code that realises it. Tell it what you want and any constraint it can't find out for itself, such as a decision made in a conversation it can't see. Don't tell it how to do the job, since its principles and skills cover that.
+description: Systems Architect. Use to design how processes communicate, where data lives, and what the system runs on; or to review such a design, or the infrastructure code that realises it. You SHOULD tell it what you want, but not how to do it.
 skills:
   - sdlc:systems-architecture
   - sdlc:escalation
