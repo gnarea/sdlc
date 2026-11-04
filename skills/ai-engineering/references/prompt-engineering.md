@@ -12,7 +12,7 @@ A _prompt_ is any text that instructs a model: a system prompt, a user prompt, o
 - An instruction SHOULD give its reason where the model needs it to apply the instruction to cases that the prompt doesn't foresee.
 - A concept SHOULD be explained in the prompt, rather than linked. A prompt MUST NOT link to anything that the model doesn't need to open, since the model may follow the link.
 - A prompt MUST NOT refer to how it came about (e.g., an issue, a pull request, an incident).
-- A prompt that's reused by more than one caller or harness (e.g., an agent, a skill) MUST NOT name another agent, a role, or a person, nor assume a development process or tooling, so that it works with any of them.
+- A prompt that more than one caller uses (e.g., an agent, a skill) MUST NOT name another agent, a role, or a person, so that it works with any caller.
 - In a template that the model fills in, placeholders MUST be written in parentheses, and the model MUST be told to leave out any section that has nothing in it.
 
 ## System prompts
@@ -34,9 +34,6 @@ A _user prompt_ assigns a task.
 
 A _skill_ is a set of instructions that the model loads when a task calls for it, along with any files that come with them (e.g., reference files, templates, scripts).
 
-- A skill MUST conform to the [Agent Skills specification](https://agentskills.io/specification), so that any harness that implements it can load the skill.
 - `SKILL.md` MUST only hold what applies to every task that the skill covers, and MUST link to a reference file for anything else, saying when each one applies.
 - Only `SKILL.md` MAY link to the skill's other files, so that every relative path resolves from the skill's root.
-- Where a step in a skill can be deterministic, the skill SHOULD come with a script that performs it.
-- Instructions MUST refer to a skill by its bare name (e.g., the `escalation` skill), since each harness has its own syntax for invoking one (e.g., `/sdlc:escalation` in Claude Code, `/skill:escalation` in Pi).
 - A prompt that relies on a skill MUST tell the model to load it before the task that it covers (e.g., "Before you review (…), you MUST load the `artefact-review` skill"), since a model may skip a skill that it's only told to use.

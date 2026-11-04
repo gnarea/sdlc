@@ -1,6 +1,6 @@
 ---
 name: ai-engineering
-description: How to build software on LLMs, whether directly on a model's API or around a harness such as a coding agent. Determinism, guardrails, and evaluation, then prompts, context, harnesses, and model families. Use when writing, changing, or reviewing a prompt, an agent, a skill, the context that a model is given, or the harness that runs it.
+description: How to build software on LLMs, whether directly on a model's API or around a harness such as a coding agent. Determinism, guardrails, evaluation, and portability, then prompts, context, harnesses, and model families. Use when writing, changing, or reviewing a prompt, an agent, a skill, the context that a model is given, or the harness that runs it.
 ---
 # AI engineering
 
@@ -11,7 +11,6 @@ Some techniques need control over each call to the model (e.g., choosing which t
 ## Determinism
 
 - Everything that can be deterministic MUST be deterministic: whatever code can compute, check, or enforce (e.g., formatting, validation, the order of steps, a permission) MUST be left to code, and the model MUST only be asked for what needs judgement.
-- Output that the model passes to code MUST be validated by that code before use (e.g., against a schema), like any other input that crosses a trust boundary.
 - Every convention that a prompt asks the model to follow SHOULD also be enforced by a deterministic check where one exists (e.g., a spellchecker, a linter, a schema validator), and run on every change, since the model will miss some slips, and so will a person reviewing its output.
 
 ## Guardrails
@@ -22,13 +21,22 @@ _Guidance_ is the context that helps the model do its job well. _Guardrails_ mak
 
 ## Evaluation
 
-- A change that's meant to fix how a model behaves (e.g., a step it skips, a document it overwrites) MUST be evaluated against what it replaces before it's adopted, with several independent runs of each.
-- The runs MUST cover every model and harness that will run the prompt, at the lowest effort level that each will run it at, as well as at the default.
+- Every change MUST be evaluated against what it replaces before it's adopted, with several independent runs of each.
+- The runs MUST use the model and harness that will run the prompt, at the lowest effort level that it'll run at, as well as at the default.
 - The test cases MUST include prompts that only imply the task (e.g., "Is this OK to merge?"), as well as prompts that state it (e.g., "Review this change").
 - Where the model doesn't do as instructed, its reasoning (e.g., a summary of its thinking) SHOULD be read to find out why, before the prompt is changed again.
 - Of the changes that pass, the smallest SHOULD be adopted.
 - The results MUST be reported as counts (e.g., 6/8 runs), along with the method and the exact version of each model and harness.
 - A defect in the model's output SHOULD be reported with real examples and measurements (e.g., the length of the documents that it wrote), and its fix MUST be evaluated against the same examples.
+
+## Portability
+
+A prompt is _portable_ where it must work with more than one model or harness (e.g., a plugin that others install in the harness of their choosing).
+
+- Whether a prompt must be portable, and with which models and harnesses, MUST be decided before it's written, as it depends on who will run it.
+- A portable prompt MUST NOT depend on anything specific to one model or harness, such as a development process, a tool, or a harness's syntax for invoking a skill (e.g., it refers to the `escalation` skill, rather than to `/sdlc:escalation` as in Claude Code).
+- A portable skill MUST conform to the [Agent Skills specification](https://agentskills.io/specification).
+- Every evaluation of a portable prompt MUST cover each model and harness that it must work with.
 
 ## Additional guidelines
 
