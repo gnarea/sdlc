@@ -14,7 +14,7 @@
     "validate:plugin": "claude plugin validate . && claude plugin validate --strict skills && claude plugin validate --strict agents"
   },
   "devDependencies": {
-    "@anthropic-ai/claude-code": "2.1.311",
+    "@anthropic-ai/claude-code": "2.1.312",
     "@cspell/dict-en-common-misspellings": "2.2.5",
     "@cspell/dict-en-gb-ise": "1.0.38",
     "cspell": "10.4.0",
