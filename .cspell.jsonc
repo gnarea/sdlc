@@ -34,19 +34,24 @@
     "greps",
     "Jira",
     "keystore",
+    "lockfiles",
     "microservices",
+    "nono",
     "plugin",
     "plugins",
     "PMBOK",
     "prototyper",
     "refactorings",
     "replaceability",
+    "reviewability",
+    "ruleset",
     "SDLC",
     "SIGTERM",
     "subclassing",
     "unlinkability",
     "unrepresentable",
     "webhook",
-    "workstreams"
+    "workstreams",
+    "worktree"
   ]
 }
