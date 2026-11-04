@@ -7,7 +7,7 @@
 ## Identity and access
 
 - The model MUST act under an identity of its own (e.g., a bot account), never a person's, so that the systems it acts on can tell its actions and approvals from the person's. The identity MUST have no more privileges than the model's tasks need.
-- An action that would reach people beyond those who asked for it (e.g., merging into a branch that others install from, publishing a release) MUST require a person's approval, enforced by the system that the action goes through (e.g., a ruleset that requires a code owner's review).
+- An action that would reach people beyond those who asked for it (e.g., merging into a branch that others install from, publishing a release) MUST require a person's approval, enforced by the system that the action goes through (e.g., a branch ruleset that requires an approving review).
 - The harness SHOULD allow whatever is common and can't cause damage without asking (e.g., read-only commands, the project's build and test commands), ask before anything that writes to a shared system (e.g., an arbitrary API call), and refuse writes to files that only a tool may change (e.g., lockfiles).
 - Where the model can run arbitrary commands, access controls SHOULD be enforced by the operating system (e.g., with nono), so that they hold whatever the model runs.
 
