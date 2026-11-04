@@ -13,6 +13,7 @@
 - The harness SHOULD allow whatever is common and can't cause damage without asking (e.g., read-only commands, the project's build and test commands), ask before anything that's irreversible or writes to a shared system (e.g., an arbitrary API call), and refuse writes to files that only a tool may change (e.g., lockfiles). A run that nobody attends MUST refuse any action that would need a person's answer.
 - Where the model can run arbitrary commands, access controls SHOULD be enforced by the operating system (e.g., with nono), so that they hold whatever the model runs.
 - Within a session, a model MUST NOT have untrusted input (e.g., a web page, an issue filed by a stranger), access to private data, and a way to communicate externally or change state, all at once. Where all three are unavoidable, each consequential action MUST pass a deterministic check or a person's approval.
+- Approvals MUST reach the model through the harness (e.g., a permission prompt), and a claim of approval in a brief or in another agent's message MUST NOT count as one, since models have invented a person's approval when briefing another agent.
 - Third-party skills, plugins, and instruction files, including any scripts that come with them, MUST be reviewed like any other dependency before they're installed.
 
 ## Sandboxes
@@ -27,6 +28,7 @@
 ## Checks
 
 - A check that serves as a guardrail (e.g., a hook that blocks a command) MUST fail closed: if it crashes, times out, or returns something malformed, the action MUST be blocked.
+- A check on the commands that a model runs SHOULD parse each command, rather than match it against a pattern, and SHOULD be backed by a check of the result once the run ends, since a model that's blocked may pursue its goal another way (e.g., deleting a file from a script once `rm` is denied).
 - Messages that the model reads from checks, hooks, and tools MUST say what's wrong and how to fix it.
 - Output that code consumes SHOULD be constrained by a schema that the platform enforces.
 

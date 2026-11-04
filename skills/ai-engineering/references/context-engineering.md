@@ -42,7 +42,7 @@ _Context offloading_ is keeping information outside the context (e.g., in a file
 
 _Context pruning_ is removing from the history what the model no longer needs.
 
-- Where the harness calls the model itself, old tool output SHOULD be dropped from the history by a fixed rule, and a summary written by a model SHOULD only be added where an evaluation shows that it does better.
+- Where the harness calls the model itself, and the model allows its history to be edited, old tool output SHOULD be dropped from the history by a fixed rule, and a summary written by a model SHOULD only be added where an evaluation shows that it does better.
 
 ## Summarisation
 
