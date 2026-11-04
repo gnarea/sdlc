@@ -35,7 +35,7 @@ Where these conflict, the earlier one wins.
 - **Know which harness you're building on.** An outer harness can only influence the model through what the inner harness exposes, so a technique that needs control over each call to the model (e.g., pruning its history) is only available where the harness calls the model itself.
 - **Every instruction must come from the practice of those the model works for, rather than from received wisdom.**
 - **Say each thing once, in the one place it belongs.** Copies of an instruction diverge until they contradict each other, and an instruction that pulls against another leaves the model to guess which one wins.
-- **Give the model what the task needs, when it needs it, and nothing else.** Load whatever only some tasks need on demand, and delegate work whose material the rest of the task doesn't need.
+- **Give the model what the task needs, when it needs it, and nothing else.** Load whatever only some tasks need on demand, offer only the tools that the task needs, and delegate work whose material the rest of the task doesn't need.
 - **Tell a model what you want and why, but not how to do it.** Relay the constraints that it can't infer, and leave room for findings that nobody anticipated.
 - **Keep every prompt where a person can review it.** Prompts live in files of their own, rather than in the code that sends them, so that a person reads what the model will read.
 - **Let a model act as itself, with no more privileges than its task needs.** Give it an identity of its own, never a person's, so that its actions and approvals can be told apart, and leave whatever reaches people beyond those who asked for it to a person's approval.

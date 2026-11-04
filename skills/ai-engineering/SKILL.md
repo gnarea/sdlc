@@ -17,16 +17,19 @@ Some techniques need control over each call to the model (e.g., choosing which t
 
 _Guidance_ is the context that helps the model do its job well. _Guardrails_ make it impossible for the model to cause damage, and easy for it to do whatever is common or reasonable.
 
-- Damage MUST be prevented by the harness (e.g., with a permission, a sandbox, an identity with limited privileges), and MUST NOT depend on an instruction alone, since the model can ignore or misread any instruction.
+- Damage MUST be prevented by the harness (e.g., with a permission, a sandbox, an identity with limited privileges), and MUST NOT depend on an instruction or on another model's judgement alone (e.g., a classifier that approves actions), since a model can ignore or misread any instruction, and a classifier can be misled.
 
 ## Evaluation
 
-- Every change MUST be evaluated against what it replaces before it's adopted, with several independent runs of each.
+- Every change MUST be evaluated against what it replaces, and new guidance also against having none, before it's adopted, with several independent runs of each, every one from a clean environment.
 - The runs MUST use the model and harness that will run the prompt, at the lowest effort level that it'll run at, as well as at the default.
-- The test cases MUST include prompts that only imply the task (e.g., "Is this OK to merge?"), as well as prompts that state it (e.g., "Review this change").
+- The test cases MUST come from real work (e.g., observed failures), and MUST include prompts that only imply the task (e.g., "Is this OK to merge?"), prompts that state it (e.g., "Review this change"), and prompts for which the behaviour mustn't occur.
+- Where the model chooses a skill or an agent by its description, whether it's chosen MUST be evaluated separately from whether it helps.
+- Whatever a rule can decide (e.g., whether a skill was loaded, whether the tests pass) MUST be checked by code, and a model MAY only grade what needs judgement.
+- Each guardrail MUST be tested by attempting what it forbids, and checking that the attempt failed, whilst the task that it allows still succeeds.
 - Where the model doesn't do as instructed, its reasoning (e.g., a summary of its thinking) SHOULD be read to find out why, before the prompt is changed again.
-- Of the changes that pass, the smallest SHOULD be adopted.
-- The results MUST be reported as counts (e.g., 6/8 runs), along with the method and the exact version of each model and harness.
+- Of the changes that pass, the smallest SHOULD be adopted. A change that raises the cost (e.g., in tokens or time) without raising the success rate MUST be treated as a regression.
+- The results MUST be reported as counts (e.g., 6/8 runs), along with the method and the exact version of each model and harness. A difference that the number of runs can't tell apart from chance SHOULD NOT be acted on.
 - A defect in the model's output SHOULD be reported with real examples and measurements (e.g., the length of the documents that it wrote), and its fix MUST be evaluated against the same examples.
 
 ## Portability
