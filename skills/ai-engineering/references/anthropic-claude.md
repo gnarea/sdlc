@@ -4,9 +4,9 @@
 
 - Opus 5.5 SHOULD be the default, starting at medium effort, and the effort level SHOULD be raised before another model is tried.
 - Opus 5.5 SHOULD run any task that ingests a large corpus, or that divides work between other agents (e.g., research).
-- Fable 5.1 SHOULD only run a task for which an evaluation shows Opus 5.5 falling short at its highest effort levels.
+- Fable 5.1 SHOULD only run a task for which evals show Opus 5.5 falling short at its highest effort levels.
 - Haiku 5.5 SHOULD only run narrow tasks whose output is checked (e.g., searching, extracting, classifying).
-- A design that mixes models (e.g., a cheaper model for the subagents) SHOULD be evaluated against the strongest of them alone at a lower effort level before it's adopted.
+- A design that mixes models (e.g., a cheaper model for the subagents) SHOULD be compared in evals with the strongest of them alone at a lower effort level before it's adopted.
 - Each model MUST be named by its full ID (e.g., `claude-sonnet-5-5`), rather than by an alias (e.g., `sonnet`), since an alias can resolve to an older model (e.g., on some cloud providers).
 - How much the model thinks MUST be set through its effort level, for each agent or call, rather than by telling it to think more or less. Each model MUST get a level of its own, since the same level means a different amount of thinking on each model, and harnesses default to different levels (e.g., Claude Code runs Sonnet 5.5 at medium, whereas the API runs it at high).
 - Data that mustn't be retained MUST NOT be sent to Fable 5.1, since it isn't offered with zero data retention.
@@ -14,7 +14,7 @@
 ## Every model
 
 - An instruction that's meant to apply broadly MUST say so (e.g., "before every review"), since Claude doesn't extend an instruction to cases that it doesn't name, least of all at low effort.
-- Emphasis other than the keywords that grade an obligation (e.g., "CRITICAL", "IMPORTANT", text in capitals) SHOULD only be added where an evaluation shows Claude under-weighting the instruction, since emphasis makes it over-apply the rule.
+- Emphasis other than the keywords that grade an obligation (e.g., "CRITICAL", "IMPORTANT", text in capitals) SHOULD only be added where evals show Claude under-weighting the instruction, since emphasis makes it over-apply the rule.
 - Prompts, skills, and tools' parameters MUST NOT ask Fable 5.1, Opus 5.5, or Sonnet 5.5 to write out its reasoning, since they may refuse. They MAY ask for a short explanation, or a summary of what was done.
 - Examples SHOULD be several and varied, since Claude copies an example's length, tone, and structure.
 - A prompt that asks for a document SHOULD ask for a length that matches what the task needs, with each point made once.

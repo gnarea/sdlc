@@ -15,10 +15,10 @@ Install it from [my marketplace](https://github.com/gnarea/clone):
 
 ## Agents
 
-- `ai-engineer`: AI Engineer, owning what each model is told, what it's given, and what it can do: prompts, agents, skills, context, and harnesses.
 - `architect`: Systems Architect, owning everything outside the OS process: inter-process contracts, backing services, and the deployment topology.
 - `programmer`: Programmer and Software Architect, owning the codebase, its data model, and its security and privacy guarantees.
 - `prototyper`: Prototyper, de-risking projects by planning, building, and testing throwaway prototypes in new and existing codebases.
+- `ai-engineer`: AI Engineer, owning what each model is told, what it's given, and what it can do: prompts, agents, skills, context, and harnesses.
 
 ## Skills
 

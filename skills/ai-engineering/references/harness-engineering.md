@@ -3,7 +3,7 @@
 ## Prompts
 
 - Prompts and prompt templates MUST live in files of their own, so that a person can review each one as the model will read it. Code MAY fill in a template's placeholders with data (e.g., a path, a diff, the task's text), but MUST NOT compose a prompt's instructions.
-- Whatever else the model reads as instructions (e.g., a tool's description, a message from a hook) SHOULD live in files beside the prompts too, or else be reviewed and evaluated like them.
+- Whatever else the model reads as instructions (e.g., a tool's description, a message from a hook) SHOULD live in files beside the prompts too, or else be reviewed like them and covered by evals.
 - A prompt that a model wrote or optimised (e.g., a skill, an instruction file) MUST be saved to a file and reviewed by a person before it's used, since guidance that models write for themselves has been found not to help.
 
 ## Identity and access

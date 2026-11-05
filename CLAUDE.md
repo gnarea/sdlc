@@ -28,7 +28,7 @@ Before you review an artefact that you didn't produce (e.g., (examples of what t
 
 ## Principles
 
-(How to deliver on the priorities, in broad terms.)
+(How to deliver on the priorities, in broad terms, in the order of the priorities that they serve.)
 
 ## Escalation
 
