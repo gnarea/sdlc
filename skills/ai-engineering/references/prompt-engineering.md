@@ -4,7 +4,6 @@ A _prompt_ is any text that instructs a model: a system prompt, a user prompt, o
 
 ## Every prompt
 
-- Each instruction MUST come from the practice of the people that the model acts for, rather than from received wisdom: it MUST record one of their conventions or decisions (e.g., how a team names its functions), or the fix for a failure seen in the model's output.
 - A prompt SHOULD hold as few instructions as do the job, since a model follows fewer of them as their number and the length of the session grow.
 - Each instruction MUST appear in one place only. Where several prompts need it, it MUST move to a skill or a file that they all load, so that no two copies can contradict each other.
 - Instructions MUST NOT pull in opposite directions. Where two goals can conflict, the prompt MUST say which one wins (e.g., by listing priorities in order).

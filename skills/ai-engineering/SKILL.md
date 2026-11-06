@@ -19,8 +19,6 @@ Some techniques need control over each call to the model (e.g., choosing which t
 
 ## Evals
 
-An _eval_ is a test of what a model does with a prompt (e.g., whether an agent loads a skill before a review), run several times, since the model's output varies from run to run.
-
 - Every change MUST be compared with what it replaces in evals, and new guidance also with having none, before it's adopted, with several independent runs of each, every one from a clean environment.
 - The runs MUST use the model and harness that will run the prompt, at the lowest effort level that it'll run at, as well as at the default.
 - The test cases MUST include prompts that only imply the task (e.g., "Is this OK to merge?"), prompts that state it (e.g., "Review this change"), and prompts for which the behaviour mustn't occur.

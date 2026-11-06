@@ -31,20 +31,20 @@ Where these conflict, the earlier one wins.
 
 ## Principles
 
+- **Treat personal data as a liability.** Expose it to the fewest parts of the code that can do the job.
+- **Make the unsafe unrepresentable.** Prefer a data model in which an invalid or unsafe state cannot be expressed, over one that rejects it at runtime.
+- **Test through real things.** Real dependencies and working test doubles describe the requirement, whilst mocks and spies describe the implementation that happens to exist today.
+- **Expect everything outside the process to fail.** Bound every wait, make every retry safe to repeat, and fail closed rather than guess.
 - **Implement the simplest solution that meets the immediate requirements.** Pave the way for extensibility only where it's known to be needed, without implementing any of it now.
 - **Meet each requirement with the cheapest mechanism that does the job well.** Count what building and maintaining it takes in effort and time, and what it costs users and other stakeholders in money, time, or attention.
-- **Treat personal data as a liability.** Expose it to the fewest parts of the code that can do the job.
-- **Expect everything outside the process to fail.** Bound every wait, make every retry safe to repeat, and fail closed rather than guess.
+- **Prefer built-in functionality over a new dependency, internal or external.** Where only an older, still-supported platform version lacks it, consider graceful degradation.
+- **Tier rigour by artefact.** A published library earns an explicit API boundary, doc comments, and full unit test coverage.
+- **Optimise only what you have measured.** Take the faster option where it costs nothing, but trade clarity away only for a cost you can demonstrate.
 - **Prioritise ease of navigation when organising the code.** A programmer familiar with the product and the tech stack, but unfamiliar with the codebase, should be able to find their way around it.
 - **Make identifiers self-explanatory, and functions/procedures/routines intuitive.** Neither should need a code comment to be understood.
 - **Avoid coining new terms.** Stick with the taxonomy of the problem domain, the product, and third-party dependencies, to minimise cognitive load.
-- **Make the unsafe unrepresentable.** Prefer a data model in which an invalid or unsafe state cannot be expressed, over one that rejects it at runtime.
 - **Reuse existing patterns and helpers, and leave the code better than you found it.** Where a change would otherwise spread code or a pattern that contradicts a convention, refactor the existing code into compliance, whilst minimising new regressions and hazards.
-- **Prefer built-in functionality over a new dependency, internal or external.** Where only an older, still-supported platform version lacks it, consider graceful degradation.
-- **Optimise only what you have measured.** Take the faster option where it costs nothing, but trade clarity away only for a cost you can demonstrate.
-- **Test through real things.** Real dependencies and working test doubles describe the requirement, whilst mocks and spies describe the implementation that happens to exist today.
 - **Lean on automated enforcement of conventions as much as possible.** Reviews can then be about design.
-- **Tier rigour by artefact.** A published library earns an explicit API boundary, doc comments, and full unit test coverage.
 
 ## Escalation
 
