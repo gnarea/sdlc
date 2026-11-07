@@ -8,12 +8,12 @@ AI engineering comes down to _guidance_, the context that helps an agent do its 
 
 This skill uses the following terms:
 
-- _Agent_: a session in which a model works on a task, from a single call (e.g., to classify an email) to a long run with tools (e.g., a subagent that reviews a change).
+- _Agent_: a session in which a model works on a task, from a single call (e.g., to classify an email) to a long run with tools (e.g., reviewing a change on another agent's behalf).
 - _Prompt_: any text that instructs an agent, such as a system prompt, a user prompt, or a skill.
 - _Harness_: the software that runs an agent, giving it its prompts and context, running the tools that it calls, and enforcing what it may do (e.g., Claude Code, an application built on a model's API).
-- _Outer harness_: a harness that runs another one instead of calling the model itself (e.g., a program that runs Claude Code sessions as steps of a workflow, or one that adds guardrails of its own around Claude Code), so it can only influence the agent through what the inner harness exposes, such as its prompts, settings, and hooks.
+- _Outer harness_: a harness that runs another one instead of calling the model itself (e.g., a program that runs Claude Code sessions as steps of a workflow, or one that adds guardrails of its own around Claude Code), so it can only influence the agent through what the inner harness exposes, such as its prompts and settings.
 
-Guardrails MUST be enforced by the harness (e.g., with a permission, a sandbox, an identity with limited privileges), and MUST NOT depend on an instruction or on another agent's judgement alone (e.g., a classifier that approves actions), since an agent can ignore or misread any instruction, and a classifier can be misled.
+Guardrails MUST be enforced by the harness (e.g., with a permission, confinement, an identity with limited privileges), and MUST NOT depend on an instruction alone, or on the judgement of an agent that reads the same untrusted input (e.g., a classifier that approves actions), since an agent can ignore or misread any instruction, and one that reads the same input can be misled by it.
 
 Every change SHOULD be compared in evals with what it replaces, and new guidance also with having none, before it's adopted, following the [evals guidelines](references/evals.md).
 
@@ -26,11 +26,11 @@ Every change SHOULD be compared in evals with what it replaces, and new guidance
 
 ### By layer
 
-Each layer builds on the one before it: context engineering on prompt engineering, and harness engineering on context engineering.
+Each layer builds on the one before it.
 
-- [Prompt engineering](references/prompt-engineering.md): The change writes or alters what an agent is told: a system prompt (e.g., an agent's definition), a user prompt, project instructions, or a skill.
-- [Context engineering](references/context-engineering.md): The change decides what an agent is given, when, or from where (e.g., which tools it's offered, what to delegate to another agent, what to keep outside its context).
-- [Harness engineering](references/harness-engineering.md): The change decides what an agent can do or reach (e.g., data, systems), or how the harness runs it.
+1. [Prompt engineering](references/prompt-engineering.md): The change writes or alters what an agent is told: a system prompt (e.g., an agent's definition), a user prompt, project instructions, or a skill.
+2. [Context engineering](references/context-engineering.md): The change decides what an agent is given, when, or from where (e.g., which tools it's offered, what to delegate to another agent, what to keep outside its context).
+3. [Harness engineering](references/harness-engineering.md): The change decides what an agent can do or reach (e.g., data, systems), or how the harness runs it.
 
 ### By model family
 
