@@ -18,6 +18,7 @@ A _system prompt_ defines a task in general terms, so that it holds for every ca
 
 - Whatever holds for every case (e.g., the agent's role, its rules, the form of its output) SHOULD go in the system prompt, and the user prompt SHOULD only hold what's specific to the case at hand (e.g., what to apply the task to, a decision already made about it, work already done on it).
 - A system prompt SHOULD only prescribe how to do the task where the task leaves no room for judgement (e.g., extracting the same fields from every email). Otherwise, it SHOULD give the goal, the priorities, and the constraints, and leave the method to the agent, so that the agent can find what nobody anticipated.
+- Where an agent is meant to use its own judgement, its system prompt MAY read as a job description: what the role owns, its priorities in order, the principles by which it delivers on them, and the hazards that it must escalate, with anything prescriptive in a skill.
 - A system prompt SHOULD be brief, since whatever only some cases need can be loaded when they need it instead (e.g., from a skill and its reference files).
 - Where the task is open-ended (e.g., research), the user prompt SHOULD spell out what to look for, whilst leaving room for findings that nobody anticipated.
 
