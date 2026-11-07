@@ -9,6 +9,8 @@
 - An instruction SHOULD give its reason where the agent needs it to apply the instruction to cases that the prompt doesn't foresee.
 - An instruction that compensates for a weakness of a model SHOULD name the model and the weakness (e.g., "since Sonnet 5.5 often skips a skill that it's only told to use"), so that it can be removed once no model that runs the prompt has the weakness.
 - A change that fixes a defect or adds a behaviour SHOULD consider simplifying or restructuring the prompt (e.g., rewording, merging, or removing instructions), as well as, or instead of, adding to it.
+- Examples SHOULD be several and varied, since a model may copy an example's length, tone, and structure.
+- A prompt that asks for a document SHOULD ask for a length that matches what the task needs, with each point made once.
 - A concept SHOULD be explained in the prompt, rather than linked. A prompt MUST NOT link to anything that the agent doesn't need to open, since the agent may follow the link.
 - A prompt MUST NOT refer to how it came about (e.g., an issue, a pull request, an incident).
 
