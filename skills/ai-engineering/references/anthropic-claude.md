@@ -8,7 +8,7 @@
 - Haiku 5.5 SHOULD only run narrow tasks whose output is checked (e.g., searching, extracting, classifying).
 - A design that mixes models (e.g., a cheaper model for the subagents) SHOULD be compared in evals with the strongest of them alone at a lower effort level before it's adopted.
 - Each model MUST be named by its full ID (e.g., `claude-sonnet-5-5`), rather than by an alias (e.g., `sonnet`), since an alias can resolve to an older model (e.g., on some cloud providers).
-- How much the model thinks MUST be set through its effort level, for each agent or call, rather than by telling it to think more or less. Each model MUST get a level of its own, since the same level means a different amount of thinking on each model, and harnesses default to different levels (e.g., Claude Code runs Sonnet 5.5 at medium, whereas the API runs it at high).
+- How much a model thinks MUST be set through its effort level, for each agent, rather than by telling it to think more or less. Each model MUST get a level of its own, since the same level means a different amount of thinking on each model, and harnesses default to different levels (e.g., Claude Code runs Sonnet 5.5 at medium, whereas the API runs it at high).
 - Data that mustn't be retained MUST NOT be sent to Fable 5.1, since it isn't offered with zero data retention.
 
 ## Every model
@@ -18,7 +18,7 @@
 - Prompts, skills, and tools' parameters MUST NOT ask Fable 5.1, Opus 5.5, or Sonnet 5.5 to write out its reasoning, since they may refuse. They MAY ask for a short explanation, or a summary of what was done.
 - Examples SHOULD be several and varied, since Claude copies an example's length, tone, and structure.
 - A prompt that asks for a document SHOULD ask for a length that matches what the task needs, with each point made once.
-- A model that runs in a sandbox SHOULD be told what the sandbox allows, since Claude is then far less likely to reach outside it.
+- An agent that runs in a sandbox SHOULD be told what the sandbox allows, since Claude is then far less likely to reach outside it.
 - Text that a harness adds to a session (e.g., a hook's message, a notice between steps) SHOULD be written as facts, and SHOULD follow the last tool result as text of its own, since Claude may otherwise take it for a prompt injection.
 - Where the harness calls the model itself, the system prompt and the tool list MUST stay identical, byte for byte, throughout a session, and the history MUST only be appended to, since an edit invalidates the cache and the model's earlier thinking, and the API may refuse it. Changes SHOULD go in as messages, and the history SHOULD be compacted by the API, or the session restarted from files.
 

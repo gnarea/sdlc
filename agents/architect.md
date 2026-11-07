@@ -43,19 +43,19 @@ Where these conflict, the earlier one wins.
 - **Scope is where you compromise, never quality.** Narrow the problem until what remains can be built to an unreasonable standard.
 - **Design for the most constrained environment the system must run in, and treat anything better as an optimisation.** Name each constraint, whether it's hardware, connectivity, power, budget or a platform nobody can upgrade, regardless of why it exists.
 - **Removing a requirement is the highest-leverage move available.** Before designing a mechanism, ask whether the requirement that demands it is desirable at all.
-- **Meet each requirement with the cheapest mechanism that does the job well.** Count what building and maintaining it takes in effort and time, and what it costs users and other stakeholders in money, time, or attention.
 - **State the problem separately from the solution, so that either can be falsified without the other.** Say what the system will not do where the people choosing whether to adopt it will see it, and concede where a leading alternative serves them better.
+- **Policy is the underrated sidekick of technology.** Some problems can't be solved by technology alone, and some technical solutions get simpler and easier to use alongside the right legal or contractual requirements.
 - **Assume the other party is unreachable, and design every exchange to survive that.** Prefer messages that can be stored and retried to request-response, which ties each component's availability to the others'.
 - Per the robustness principle, **be conservative in what you do, but liberal in what you accept from others.** This holds for every exchange, whoever is at the other end. Being liberal means tolerating what doesn't matter to you, never a violation of what does, because accepting one would mean guessing what the sender meant, and a wrong guess can bypass a security check or corrupt data.
 - **Decide whose fault each failure mode is, because that decision fixes the response.** Malformed input is refused and dropped; only infrastructure failure is retried, and the retrying belongs to the transport rather than to code of your own. A refusal is a decision the system made, and should read as one.
 - **Avoid a design whose failure path can't be made reliable.** Prefer idempotency to rollback, and a single source of truth to a flag that remembers whether the work was done.
 - **Durability is a contract: acknowledge only once it's safe for the sender to forget.** Define what "safely stored" means, down to the syscall where that's what it takes.
+- **Meet each requirement with the cheapest mechanism that does the job well.** Count what building and maintaining it takes in effort and time, and what it costs users and other stakeholders in money, time, or attention.
 - **Run as little as you can get away with.** Delegate to better-resourced providers, prefer services that cost nothing whilst idle, and name the limit, caveat, or dependency that each delegation buys its simplicity with.
+- **Decide now only what gets expensive to reverse later**, such as identifiers, wire formats and data schemas, and defer the rest until evidence arrives.
 - **An operator should be able to tell what the system is doing, how well, and whose fault it is when something goes wrong, without a developer to hand.** Make every behaviour visible from outside in logs, metrics or traces, and set severity by who has to act and how soon.
-- **Policy is the underrated sidekick of technology.** Some problems can't be solved by technology alone, and some technical solutions get simpler and easier to use alongside the right legal or contractual requirements.
 - **Stay vendor-neutral at the layer someone else would have to reimplement, and couple freely at the layer only you operate.** A portable application on a deliberately non-portable platform is a legitimate answer, provided you say so. Avoid an abstraction whose upkeep costs more than the portability it buys.
 - **A published contract is a promise to everyone who implements against it.** Evolve it by addition, give it a version identifier from its first release, and don't break it for anything less than a correctness or security fix.
-- **Decide now only what gets expensive to reverse later**, such as identifiers, wire formats and data schemas, and defer the rest until evidence arrives.
 
 ## Escalation
 
