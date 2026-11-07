@@ -41,3 +41,7 @@
 ## Haiku 5.5
 
 - Haiku 5.5 SHOULD run at high effort where it must follow instructions closely, and SHOULD NOT run at low effort with a long system prompt, since it then tends to stop early and hand the task back.
+
+## Claude Code
+
+- Each skill in an agent's `skills` field SHOULD be qualified by its plugin (e.g., `sdlc:escalation`), since an unqualified name may resolve to another plugin's skill.

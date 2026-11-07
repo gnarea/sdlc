@@ -2,7 +2,6 @@
 
 - Each eval MUST be run several times, independently and from a clean environment every time, on the model and harness that will run the prompt, at the lowest effort level that it'll run at, as well as at the default.
 - The test cases MUST include prompts that only imply the task (e.g., "Is this OK to merge?"), prompts that state it (e.g., "Review this change"), and prompts for which the behaviour mustn't occur.
-- Where a skill or an agent is chosen by its description, whether it's chosen MUST be checked separately from whether it helps.
 - Whatever a rule can decide (e.g., whether a skill was loaded, whether the tests pass) MUST be checked by code, and an agent MAY only grade what code can't.
 - Each guardrail MUST be tested by attempting what it forbids, and checking that the attempt failed, whilst the task that it allows still succeeds.
 - Where an agent doesn't do as instructed, its reasoning (e.g., a summary of its thinking) SHOULD be read to find out why, before the prompt is changed again.
