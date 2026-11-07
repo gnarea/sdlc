@@ -6,8 +6,7 @@ The _context_ is everything that an agent has in front of it when it responds: i
 
 _Context augmentation_ is giving an agent the information that its task needs (e.g., in the prompt, through a search index, in a skill).
 
-- Text that loads at the start of every session (e.g., a system prompt, a project's instructions for agents such as `CLAUDE.md`) MUST be limited to what every task needs and the agent can't discover for itself (e.g., a convention that departs from the norm, the commands for common tasks), plus pointers to where the rest lives.
-- A project's instructions for agents MUST be succinct (e.g., under 100 lines), and MUST NOT repeat the project's other documents.
+- Text that loads at the start of every session (e.g., a system prompt, project instructions) MUST be limited to what every task needs and the agent can't discover for itself (e.g., a convention that departs from the norm, the commands for common tasks), plus pointers to where the rest lives.
 - Whatever only some tasks need SHOULD be loaded when they need it (e.g., from a skill, a reference file, or a document that the prompt points to).
 - The description of a skill or an agent MUST say what it covers and when to use it, in the terms that a matching request would use.
 - A skill that applies to every task that an agent performs SHOULD be preloaded, rather than left for the agent to load when its description matches.

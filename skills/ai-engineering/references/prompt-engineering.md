@@ -27,6 +27,13 @@ A _system prompt_ sets the role that an agent plays across every task that it's 
 - An agent's description SHOULD tell callers to say what they want, but not how to do it.
 - Where a harness loads skills for an agent by name (e.g., the `skills` field of a Claude Code agent), each name SHOULD be qualified by its plugin (e.g., `sdlc:escalation`), since an unqualified name may resolve to another plugin's skill.
 
+## Project instructions
+
+_Project instructions_ are the files that every agent working on a project loads at the start of each session (e.g., `AGENTS.md`, `CLAUDE.md`).
+
+- Project instructions MUST only hold what's relevant to every agent that works on the project, since every agent loads them, whereas specialised agents each need different things. They SHOULD then be succinct (e.g., under 100 lines), and MUST NOT repeat the project's other documents.
+- What only some agents need SHOULD go in instructions of their own (e.g., an agent's definition, a skill that the agent preloads, a rule scoped to some files).
+
 ## User prompts
 
 A _user prompt_ assigns a task.
