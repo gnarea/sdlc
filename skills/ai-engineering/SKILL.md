@@ -26,10 +26,12 @@ Every change SHOULD be compared in evals with what it replaces, and new guidance
 
 ### By layer
 
-- [Prompt engineering](references/prompt-engineering.md): The change writes or alters what an agent is told: a system prompt (e.g., an agent's definition), a user prompt, or a skill.
-- [Context engineering](references/context-engineering.md): The change decides what an agent is given, when, or from where (e.g., what to front-load, what to load on demand, what to delegate to another agent).
+Each layer builds on the one before it: context engineering on prompt engineering, and harness engineering on context engineering.
+
+- [Prompt engineering](references/prompt-engineering.md): The change writes or alters what an agent is told: a system prompt (e.g., an agent's definition), a user prompt, project instructions, or a skill.
+- [Context engineering](references/context-engineering.md): The change decides what an agent is given, when, or from where (e.g., which tools it's offered, what to delegate to another agent, what to keep outside its context).
 - [Harness engineering](references/harness-engineering.md): The change decides what an agent can do or reach (e.g., data, systems), or how the harness runs it.
 
 ### By model family
 
-- [Anthropic Claude](references/anthropic-claude.md): Fable, Opus, Sonnet, or Haiku will run the prompt, or Claude Code will run the agent.
+Where Fable, Opus, Sonnet, or Haiku will run the prompt, or Claude Code will run the agent, see the [Anthropic Claude](references/anthropic-claude.md) guidelines.

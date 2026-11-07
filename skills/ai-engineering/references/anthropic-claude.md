@@ -20,7 +20,7 @@
 - A prompt that asks for a document SHOULD ask for a length that matches what the task needs, with each point made once.
 - An agent that runs in a sandbox SHOULD be told what the sandbox allows, since Claude is then far less likely to reach outside it.
 - Text that a harness adds to a session (e.g., a hook's message, a notice between steps) SHOULD be written as facts, and SHOULD follow the last tool result as text of its own, since Claude may otherwise take it for a prompt injection.
-- Where the harness calls the model itself, the system prompt and the tool list MUST stay identical, byte for byte, throughout a session, and the history MUST only be appended to, since an edit invalidates the cache and the model's earlier thinking, and the API may refuse it. Changes SHOULD go in as messages, and the history SHOULD be compacted by the API, or the session restarted from files.
+- Where the harness calls the model itself, the system prompt and the tool list MUST stay identical, byte for byte, throughout a session, and the history MUST only be appended to, since an edit invalidates the cache and the model's earlier thinking, and the API may refuse it. Changes SHOULD go in as messages, and the history SHOULD be compacted by the API, or the session restarted from what's been written down.
 
 ## Fable 5.1
 
@@ -30,7 +30,7 @@
 
 ## Opus 5.5
 
-- Untrusted content SHOULD reach Opus 5.5 through a tool result, rather than in a user message (e.g., pasted into a brief), since it treats whatever is in a user message as coming from the user.
+Untrusted content SHOULD reach Opus 5.5 through a tool result, rather than in a user message (e.g., pasted into a brief), since it treats whatever is in a user message as coming from the user.
 
 ## Sonnet 5.5
 
@@ -40,8 +40,8 @@
 
 ## Haiku 5.5
 
-- Haiku 5.5 SHOULD run at high effort where it must follow instructions closely, and SHOULD NOT run at low effort with a long system prompt, since it then tends to stop early and hand the task back.
+Haiku 5.5 SHOULD run at high effort where it must follow instructions closely, and SHOULD NOT run at low effort with a long system prompt, since it then tends to stop early and hand the task back.
 
 ## Claude Code
 
-- Each skill in an agent's `skills` field SHOULD be qualified by its plugin (e.g., `sdlc:escalation`), since an unqualified name may resolve to another plugin's skill.
+Each skill in an agent's `skills` field SHOULD be qualified by its plugin (e.g., `sdlc:escalation`), since an unqualified name may resolve to another plugin's skill.

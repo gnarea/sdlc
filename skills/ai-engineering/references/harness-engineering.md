@@ -33,12 +33,9 @@
 - Messages that an agent reads from checks, hooks, and tools MUST say what's wrong and how to fix it.
 - Output that code consumes SHOULD be constrained by a schema that the platform enforces.
 
-## Models
-
-- Each agent SHOULD run on the cheapest model, at the lowest effort level, that does its job well enough, as evals show. Where a faster option costs more, the cheaper one SHOULD be chosen, unless speed has been asked for.
-
 ## Runs
 
+- Each agent SHOULD run on the cheapest model, at the lowest effort level, that does its job well enough, as evals show. Where a faster option costs more, the cheaper one SHOULD be chosen, unless speed has been asked for.
 - Every run MUST be capped in turns, time, and spend (e.g., 30 turns and 20 minutes for Claude Code in CI), by the harness rather than by the agent, and MUST be stoppable from outside.
 - Every run MUST leave a complete transcript (e.g., its inputs, its tool calls and their results, what was refused, and what it cost).
 - The harness MUST be pinned to an exact version, and updated through a change that's reviewed like any other, since a new version can change how it treats a prompt (e.g., how it resolves a skill's name).
