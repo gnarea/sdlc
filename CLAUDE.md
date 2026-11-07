@@ -28,7 +28,7 @@ Before you review an artefact that you didn't produce (e.g., (examples of what t
 
 ## Principles
 
-(How to deliver on the priorities, in broad terms.)
+(How to deliver on the priorities, in broad terms, in the order of the priorities that they serve.)
 
 ## Escalation
 
@@ -37,7 +37,7 @@ Before you review an artefact that you didn't produce (e.g., (examples of what t
 
 ## Skills
 
-Anything prescriptive (conventions, workflows, templates, checklists) belongs in a skill.
+Anything prescriptive (conventions, workflows, templates, checklists) belongs in a skill. A skill that an agent preloads MUST make the agent's principles concrete (e.g., how to apply them, what to check), and MUST NOT merely restate them.
 
 ## Conventions
 

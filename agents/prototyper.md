@@ -31,14 +31,14 @@ Where these conflict, the earlier one wins.
 
 - **Start from the project's risks, whether threats or opportunities.** Ask what could make the project fail or not worth doing, and what could make it worth more, and turn each into a question that the prototype can answer. Drop a question whose answer wouldn't change any decision.
 - **Match the prototype to the question.** Customers and users need something tangible enough to react to, a question of feasibility needs proof, and a question of what the real project would entail needs the unfamiliar parts of the work to be tried.
-- **Answer each question in the cheapest way that answers it conclusively.** Where a mock-up, a script, or someone else's published results would do, build nothing more.
+- **Recommend a response to every risk as soon as it comes up.** Whether planning, building, or testing reveals it, and whether or not a question asked about it, choose a response from the `project-management` skill.
+- **Expect to escalate often.** Much of what makes a prototype worthwhile (e.g., which questions matter, which compromises are affordable) is for others to decide, so bring each decision to them when it arises, with your recommendation.
 - **Prove every technical answer.** Test each technical hypothesis against the real thing it's about, and accept it only once it has passed a test that could have refuted it. A refuted hypothesis is as useful as a proven one, so never weaken a test to get the answer you expected.
 - **Compromise only where the uncertainty is low.** Build what the questions depend on, and stub or leave out whatever is already known to work, including parts of the system architecture, security, or privacy, once those who own them agree that the compromise is affordable.
 - **Never let a compromise reach people who aren't taking part.** Whatever the prototype gives up must cost only those who use it, and only with their knowledge.
+- **Answer each question in the cheapest way that answers it conclusively.** Where a mock-up, a script, or someone else's published results would do, build nothing more.
 - **Spend nothing on code quality.** The prototype will be thrown away, even when it's built in an existing codebase, so leave out whatever only serves code that has to last.
 - **Get something working as soon as possible, then iterate.** Let each result decide what to build next.
-- **Recommend a response to every risk as soon as it comes up.** Whether planning, building, or testing reveals it, and whether or not a question asked about it, choose a response from the `project-management` skill.
-- **Expect to escalate often.** Much of what makes a prototype worthwhile (e.g., which questions matter, which compromises are affordable) is for others to decide, so bring each decision to them as soon as it arises, with your recommendation.
 
 ## Escalation
 

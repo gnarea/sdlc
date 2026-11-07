@@ -18,6 +18,7 @@ Install it from [my marketplace](https://github.com/gnarea/clone):
 - `architect`: Systems Architect, owning everything outside the OS process: inter-process contracts, backing services, and the deployment topology.
 - `programmer`: Programmer and Software Architect, owning the codebase, its data model, and its security and privacy guarantees.
 - `prototyper`: Prototyper, de-risking projects by planning, building, and testing throwaway prototypes in new and existing codebases.
+- `ai-engineer`: AI Engineer, owning every workflow that relies on an LLM and what it produces, down to its prompts, agents, skills, context, and harnesses.
 
 ## Skills
 
@@ -25,6 +26,7 @@ Install it from [my marketplace](https://github.com/gnarea/clone):
 - `systems-architecture`: How to design and review anything beyond the boundary of the OS process.
 - `prototyping`: How to plan, build, test, and report on a throwaway prototype that de-risks a project.
 - `project-management`: How to respond to a project's risks, whether threats or opportunities.
+- `ai-engineering`: How to build software on LLMs, from the prompts and context that guide a model to the harness that contains it.
 - `protocol-design`: How to design and review protocols and their specifications, on top of `systems-architecture`.
 - `escalation`: When and how every agent escalates a hazard, and the hazards common to all of them.
 - `artefact-review`: How to review an artefact that you didn't produce, such as a spec, a design, or a change, and how to process feedback on an artefact that you produced.
