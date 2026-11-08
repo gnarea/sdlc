@@ -8,7 +8,7 @@ The agents and skills are meant to work well on any model at least as capable as
 
 ## Agents
 
-An agent is a job description: the priorities it optimises for, and the principles by which it delivers on them. It says what the role must achieve and why, and leaves how to the model's judgement, since spelling out each step would make it longer, and more rigid for a model that doesn't need it.
+An agent is a job description: the priorities it optimises for, and the principles by which it delivers on them. It says what the role must achieve and why, and leaves how to the model's judgement.
 
 ```markdown
 ---
