@@ -4,9 +4,11 @@ This plugin provides the building blocks of AI software factories: agents for th
 
 The prompt or harness decides who each escalation goes to, and provides any process or tooling that they rely on. For example, if the human in the loop cares about a product's systems architecture and user experience, but not its code, the harness would send escalations about the code or the software architecture to another programmer agent, and those about the systems architecture or the user experience to the human.
 
+The agents and skills are meant to work well on any model at least as capable as Opus 5.5, so their evals only run on Opus 5.5.
+
 ## Agents
 
-An agent is a job description: the priorities it optimises for, and the principles by which it delivers on them.
+An agent is a job description: the priorities it optimises for, and the principles by which it delivers on them. It says what the role must achieve and why, and leaves how to the model's judgement.
 
 ```markdown
 ---
@@ -19,6 +21,8 @@ skills:
 # (Role title)
 
 (Responsibilities.)
+
+(How the role's work shapes the domains that it doesn't own.) However, you don't own any of them, so you MUST NOT (what the role mustn't do in them), even where you're asked to.
 
 Before you review an artefact that you didn't produce (e.g., (examples of what the role reviews)), or process feedback on an artefact that you produced, you MUST load the `artefact-review` skill and follow it.
 
@@ -45,7 +49,6 @@ Anything prescriptive (conventions, workflows, templates, checklists) belongs in
 - Agents and skills MUST NOT assume any development process or tooling, so that they compose with any harness.
 - Skills and agents MUST refer to a skill by its bare name in their instructions (e.g., the `escalation` skill), since the slash and the plugin prefix (e.g., `/sdlc:escalation`) are specific to Claude Code.
 - Agents MUST list each skill under `skills:` with its plugin prefix (e.g., `sdlc:escalation`), since Claude Code otherwise loads the skill of that name from whichever plugin it loaded first.
-- Agents MUST tell the model to load any other skill before the task that it covers (e.g., "Before you review (…), you MUST load the `artefact-review` skill"), since Sonnet 5.5 often skips a skill that it's only told to use.
 - A skill that extends another MUST only cover what changes in its domain, and the skill it extends MUST NOT cover anything specific to that domain, so that no instruction appears in both. The skills that extend another are:
   - `protocol-design`, which extends `systems-architecture` with what's specific to protocols, including cryptographic ones.
 - In skills, only `SKILL.md` MAY link to the skill's other files (e.g., reference files, templates), so that every relative path resolves from the skill's root. Any other file MAY refer to them by name instead (e.g., "the report template").
