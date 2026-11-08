@@ -4,6 +4,8 @@ This plugin provides the building blocks of AI software factories: agents for th
 
 The prompt or harness decides who each escalation goes to, and provides any process or tooling that they rely on. For example, if the human in the loop cares about a product's systems architecture and user experience, but not its code, the harness would send escalations about the code or the software architecture to another programmer agent, and those about the systems architecture or the user experience to the human.
 
+The agents and skills are meant to work well on Opus 5.5 or a more capable model. They say what each role must achieve and why, and leave how to the model's judgement. A less capable model would need each step spelt out, which would make every prompt longer, and more rigid for the models that don't need it.
+
 ## Agents
 
 An agent is a job description: the priorities it optimises for, and the principles by which it delivers on them.

@@ -4,6 +4,8 @@ The software development lifecycle, expressed as agents that carry a role's prio
 
 The agents and skills are building blocks: the prompt or harness that uses them decides who each escalation goes to, and provides any process or tooling that they rely on.
 
+The agents are meant to run on Opus 5.5 or a more capable model, since their prompts leave how to do the work to the model's judgement.
+
 _Endgame:_ to offload as much as I can to the LLM, so I can operate a "dark software factory" where I play the roles of Product Manager, Program Manager, Project Manager, and ultimate Systems Architect.
 
 Install it from [my marketplace](https://github.com/gnarea/clone):
@@ -28,6 +30,6 @@ Install it from [my marketplace](https://github.com/gnarea/clone):
 - `project-management`: How to respond to a project's risks, whether threats or opportunities.
 - `ai-engineering`: How to build software on LLMs, from the prompts and context that guide a model to the harness that contains it.
 - `protocol-design`: How to design and review protocols and their specifications, on top of `systems-architecture`.
-- `escalation`: How every agent stays within its domain, when and how it escalates a hazard, and the hazards common to all of them.
+- `escalation`: When and how every agent escalates a hazard, and the hazards common to all of them.
 - `artefact-review`: How to review an artefact that you didn't produce, such as a spec, a design, or a change, and how to process feedback on an artefact that you produced.
 - `issue-tracking`: Templates and rules for creating, updating, and closing issues in any tracker, including the sign-off required before writing to one.
