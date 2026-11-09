@@ -1,0 +1,14 @@
+diff --git a/src/shop/users.py b/src/shop/users.py
+--- a/src/shop/users.py
++++ b/src/shop/users.py
+@@ -15,3 +15,11 @@ def get_user(connection: sqlite3.Connection, user_id: int) -> User | None:
+         (user_id,),
+     ).fetchone()
+     return User(*row) if row else None
++
++
++def find_users_by_name(connection: sqlite3.Connection, name: str) -> list[User]:
++    rows = connection.execute(
++        f"SELECT id, email, display_name FROM users WHERE display_name LIKE '%{name}%'"
++    ).fetchall()
++    return [User(*row) for row in rows]

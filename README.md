@@ -33,3 +33,7 @@ Install it from [my marketplace](https://github.com/gnarea/clone):
 - `escalation`: When and how every agent escalates a hazard, and the hazards common to all of them.
 - `artefact-review`: How to review an artefact that you didn't produce, such as a spec, a design, or a change, and how to process feedback on an artefact that you produced.
 - `issue-tracking`: Templates and rules for creating, updating, and closing issues in any tracker, including the sign-off required before writing to one.
+
+## Evals
+
+The agent eval suite in [`evals/`](evals/README.md) measures how reliably each agent behaves as its definition says.

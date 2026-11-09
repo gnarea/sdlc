@@ -42,3 +42,6 @@ jobs:
 
       - name: Validate plugin with Claude Code
         run: npm run validate:plugin
+
+      - name: Test the eval suite's wrapper
+        run: npm run test:evals

@@ -11,10 +11,11 @@
     "spellcheck": "cspell lint --no-progress",
     "lint": "markdownlint-cli2",
     "validate:skills": "uv run --locked .github/scripts/validate_skills.py skills",
-    "validate:plugin": "claude plugin validate . && claude plugin validate --strict skills && claude plugin validate --strict agents"
+    "validate:plugin": "claude plugin validate . && claude plugin validate --strict skills && claude plugin validate --strict agents",
+    "test:evals": "uv run --locked python -I -B -m unittest discover --start-directory evals/runner --top-level-directory evals/runner"
   },
   "devDependencies": {
-    "@anthropic-ai/claude-code": "2.1.312",
+    "@anthropic-ai/claude-code": "2.1.317",
     "@cspell/dict-en-common-misspellings": "2.2.5",
     "@cspell/dict-en-gb-ise": "1.0.38",
     "cspell": "10.4.0",

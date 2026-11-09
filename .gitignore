@@ -1,2 +1,5 @@
 node_modules/
 .venv/
+__pycache__/
+# Where `claude plugin eval` writes results when it runs without the suite's wrapper.
+evals/results/
