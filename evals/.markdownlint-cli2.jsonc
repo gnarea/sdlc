@@ -1,0 +1,6 @@
+{
+  "config": {
+    // Prompts and fixtures mark off material with XML tags (e.g., `<request>`), which is deliberate.
+    "no-inline-html": false
+  }
+}

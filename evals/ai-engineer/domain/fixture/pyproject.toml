@@ -1,0 +1,4 @@
+[project]
+name = "tern"
+version = "1.8.2"
+requires-python = ">=3.12"
