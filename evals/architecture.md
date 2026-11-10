@@ -2,7 +2,7 @@
 
 <!-- cspell:words cspell AppArmor Dependabot lockfile seccomp tmpfs worktrees -->
 
-The agent eval suite measures how reliably the `sdlc` plugin's agents behave as their definitions say: whether each agent keeps to its priorities and principles, escalates the hazards it must, stays within its domain, and reviews artefacts and processes feedback as required. Each agent is a Claude Code subagent defined by a prompt and the skills it preloads, so its behaviour can only be observed by running it on a model many times and grading what it did. The suite runs on demand on the operator's Linux machine, through Claude Code's plugin eval harness, on Opus 5.5 at three effort levels. Everything that the harness starts is confined, so that the agents under test cannot reach the operator's files, sockets, or accounts.
+The agent eval suite measures how reliably the `sdlc` plugin's agents behave as their definitions say: whether each agent keeps to its priorities and principles, escalates the hazards it must, stays within its domain, and reviews artefacts and processes feedback as required. Each agent is a Claude Code subagent defined by a prompt and the skills it preloads, so its behaviour can only be observed by running it on a model many times and grading what it did. The suite runs on demand on the operator's Linux machine, through Claude Code's plugin eval harness, on Opus 5.5, at the `low` effort level unless the operator asks for others. Everything that the harness starts is confined, so that the agents under test cannot reach the operator's files, sockets, or accounts.
 
 ```mermaid
 flowchart LR
@@ -16,7 +16,7 @@ flowchart LR
 
 ## Purpose
 
-The plugin's agents and skills change often, and agents make many of the changes. A change to a definition or a skill can alter whether an agent loads the skills it must, asks before introducing a hazard, declines work outside its domain, or lets an earlier priority win over a later one. Nobody notices until a caller depends on that behaviour. The owner needs to know, for any working tree and on demand, how often each agent behaves as its definition says, at each effort level that callers use, and at a cost the owner has agreed to.
+The plugin's agents and skills change often, and agents make many of the changes. A change to a definition or a skill can alter whether an agent loads the skills it must, asks before introducing a hazard, leaves work outside its domain to others, or lets an earlier priority win over a later one. Nobody notices until a caller depends on that behaviour. The owner needs to know, for any working tree and on demand, how often each agent behaves as its definition says at the lowest effort level expected to be good enough, which is `low` on Opus 5.5, and at a cost the owner has agreed to. Now and then, the owner also needs to know whether a higher level behaves differently, since a pass at `low` doesn't prove that a higher level behaves the same.
 
 Each answer must be attributable: a failure must show whether the agent, the case, or the infrastructure was at fault. The measurements must also be extensible, since later suites will test how each agent observes its paired skill (e.g., the programmer and the `programming` skill).
 
@@ -44,13 +44,14 @@ A pilot of one case, with one run per level, settles the following before the fu
 These decisions wait for evidence, or for the owner:
 
 - **Isolating the confined tree's network in a namespace of its own**: This would stop a confined process from reaching another host on the proxy's port. On this machine it needs an AppArmor profile, and therefore root, so it is the owner's decision.
-- **Whether a full run fits in the subscription budget**: A full run is 36 cases × 3 levels × 3 runs, or 324 runs. If it does not fit, the owner gets options to trim it before it runs.
+- **Whether a full run fits in the subscription budget**: A full run is 36 cases × 3 runs, or 108 runs, at the default level, and each further level adds as many. If it does not fit, the owner gets options to trim it before it runs.
+- **Lowering the cap on each run to 3 or 4 minutes**: This waits until a full run shows that no case needs 5.
 - **A confinement policy for macOS**.
 
 ### Users and other stakeholders
 
 - **Operator**: Whoever runs the suite on their machine: today the owner, or an agent acting for the owner.
-  - Needs: one entry point; a choice of agents and levels, all of them by default; visible progress; a summary per case and level, with inconclusive runs set apart; and a reason whenever the suite refuses to start or stops.
+  - Needs: one entry point; a choice of agents, cases, and levels, with every case at `low` by default; visible progress; a summary per case and level, with inconclusive runs, and the failures of runs cut short, set apart; and a reason whenever the suite refuses to start or stops.
   - Constraints: a Linux machine with Landlock (kernel 7.0); a RAM-backed `/tmp` of 1.9 GB, shared with every session on the machine; and one user account, shared with the owner's other sessions and agents. The operator must also confirm trust in each new worktree in person.
   - Leading alternative: running Claude Code's plugin eval harness directly. That is simpler to set up, works on macOS, and accepts any option. It also leaves the operator's machine within reach of whatever a run executes, has no weekly spending limit, records nothing that ties a result to the code that produced it, and counts infrastructure failures against the agents. On platforms the suite does not support, it is the operator's only option.
   - Trust: the owner trusts the operator with the credential, and therefore with the subscription's allowance or the API key's spend, and with deciding which checkouts may run.
@@ -92,14 +93,15 @@ On the subscription, all eval invocations together stop once they have raised th
 - A main session delegates each case's request to the agent under test, which preloads its skills.
 - Both sessions run on Opus 5.5, at the effort level under test.
 - The plugin is tested as it stood in the working tree when the invocation started, uncommitted changes included.
+- The agent under test can delegate in turn, as it can for callers. Claude Code's setting that forbids nested delegation also tells the agent to do the work itself, which would bias the cases that check whether it leaves work outside its domain to others.
 
-This optimises for results that predict real use, at the expense of the delegating session's cost.
+This optimises for results that predict real use, at the expense of the cost of the delegating session, and of any agent that the agent under test delegates to.
 
 One part of real use is conceded. The harness turns remote feature flags off for every run, so the runs use the pinned Claude Code's defaults, whereas the owner's own sessions get flags remotely. Where a flag changes behaviour, the runs can therefore behave differently from the owner's sessions. In exchange, the runs behave the same way on every invocation of a given pin.
 
 ### 5. A run counts against an agent only when the agent caused its outcome
 
-A run passes, fails, or is inconclusive. It is inconclusive whenever something other than the agent decided the outcome: the infrastructure, the harness, the confinement, the delegating session, the budget, or an effort level other than the one requested. Rules decide whatever they can, and an LLM judge grades only what rules cannot, from criteria concrete enough to tell a pass from a failure. This optimises for trust in the results, at the expense of coverage: inconclusive runs are reported, not re-run.
+A run passes, fails, or is inconclusive. It is inconclusive whenever something other than the agent decided the outcome: the infrastructure, the harness, the confinement, the delegating session, the budget, or an effort level other than the one requested. A run cut short by its time or turn limit is inconclusive too, unless its trace already shows it doing something that its case forbids, which no later step could undo. Rules decide whatever they can, and an LLM judge grades only what rules cannot, from criteria concrete enough to tell a pass from a failure. This optimises for trust in the results, at the expense of coverage (inconclusive runs are reported, not re-run), and of a bias against the agent, since a run cut short can fail but never pass.
 
 ### 6. Every result can be traced to what produced it
 
@@ -157,6 +159,8 @@ flowchart TB
 - **Runs**: One Claude Code session per run of a case, made of a main session that delegates the case's request to the agent under test, which preloads its skills. Both use Opus 5.5 at the level under test.
   - Tools: reading and searching the run's workspace and the plugin, loading skills, delegating, and writing within the workspace. A case can withhold writing.
   - Nothing that executes commands, reaches the Web, or acts beyond the workspace.
+  - The agent under test can delegate in turn. The trace records the tool calls of the main session and of the agent under test, whose calls carry a `parent_tool_use_id`, but only progress summaries of a nested agent's.
+  - Each run is cut short at its case's time limit, which is 4 minutes at most, or at its case's turn limit.
   - Each run knows only its case's prompt and fixture.
 - **Usage reading**: On the subscription, one minimal model request from the pinned Claude Code, whose response reports the seven-day utilisation and the week's reset time.
   - It runs under the same confinement and with the same credential as the harness, and knows nothing else.
@@ -165,11 +169,11 @@ flowchart TB
   - Every agent gets the same kinds of case, each with a scenario in that agent's own domain:
     - review (implied, explicit, and a negative);
     - feedback;
-    - domain (and a negative);
+    - domain (and a negative), which the agent passes by declining the work outside its domain or handing it to another agent, and fails by doing it itself;
     - a confirm-first hazard (and a negative, with the hazard acknowledged up front);
     - priorities.
   - That makes nine cases per agent, 36 in all. Each case is tagged with its agent and runs three times per level.
-  - Rules grade what they can: which agent the main session delegated to, whether it passed the case's request on, which session loaded a skill, and whether a fixture file changed. The judge grades the rest.
+  - Rules grade what they can: which agent the main session delegated to, whether it passed the case's request on, which session loaded a skill or made a change, and whether a fixture file changed. The judge grades the rest.
   - Each run's workspace starts as a copy of its case's fixture. Fixtures hold nothing that looks like a credential, no Claude Code configuration, and no git metadata.
   - Later suites add cases next to these, under the same contracts.
 - **Operator state store**: A directory at the account's own `~/.local/state/sdlc-evals`, outside the confinement. The location is fixed whatever the environment says, so that every invocation under the account shares one lock and one ledger. Only the operator's account can read it, and only the wrapper reads it. It holds:
@@ -186,10 +190,11 @@ flowchart TB
 
 ### An invocation
 
-1. The operator chooses the agents, the levels, and the credential source. All agents and all levels are the default. The subscription is the default credential; an API key is used only when the operator chooses it and gives a dollar cap.
+1. The operator chooses the agents, the levels, and the credential source. All agents, at the `low` level, are the default. The subscription is the default credential; an API key is used only when the operator chooses it and gives a dollar cap.
 2. The wrapper takes the operator's invocation lock, which only one invocation at a time can hold under the operator's account. The operating system releases it when the wrapper exits, so a crash cannot leave it behind. If another invocation holds it, the wrapper refuses to start, and names that invocation.
 3. The wrapper takes the plugin snapshot, and refuses to start unless each of the following holds:
    - every case uses permitted keys only, which exclude a case-level plugin;
+   - no case lets a run last more than 4 minutes;
    - every case uses the one permitted fixture-copying step;
    - no fixture holds Claude Code configuration or git metadata;
    - the plugin's root holds only permitted entries;
@@ -218,9 +223,10 @@ flowchart TB
 
 - **Outcome of a run**: Each run ends up in one of three states.
   - Passed: it completed, and every grader passed.
-  - Failed: it completed, and a grader failed.
+  - Failed: it completed, and a grader failed. A run cut short by its time or turn limit also fails if it failed a prohibition of the trace, and none of the other causes below applies.
   - Inconclusive: something other than the agent decided the outcome, and the run is labelled with the cause. The causes are:
-    - a harness or API error, a timeout, or the turn limit;
+    - a harness or API error;
+    - a timeout or the turn limit, unless the run had already failed a prohibition of the trace;
     - a delegation that did not happen as asked, as the trace or the delegation graders show;
     - an effort level other than the requested one;
     - a sandbox denial (a tool result flagged as an error because the confinement refused an operation);
@@ -228,14 +234,16 @@ flowchart TB
     - a run that never ran, or whose harness call's result could not be read;
     - a harness call voided by an unexpected tool.
 
-  Pass counts cover completed runs only. The suite retries nothing itself, since Claude Code already retries API errors with backoff.
-- **Summary**: Pass counts per case and level, the inconclusive runs with their causes, how many runs had their effort confirmed, the proxy's refusals, and each level's spend.
+  A _prohibition of the trace_ is a grader of the trace that only forbids something: a `regex` grader on the trace with `match: not_contains`, or a `tool_used` grader whose minimum is zero (the harness takes a missing `min` as 1). Whether a grader is one follows from its definition alone, and the trace only grows, so a prohibition that failed when the run was cut short would still fail at its end. No other grader counts on a run cut short, whether it passed, failed, or could not run: not the judge, since the run has no final answer, and not a grader of the workspace (`file_exists`, or `regex` on a file), since a later edit could have changed the workspace. The wrapper therefore never reads a file to classify a run.
+
+  Pass counts cover completed runs, and the runs cut short that failed. The suite retries nothing itself, since Claude Code already retries API errors with backoff.
+- **Summary**: Pass counts per case and level, the failures of runs cut short apart from those of completed runs, the inconclusive runs with their causes, the chosen cases that did not run, how many runs had their effort confirmed, the proxy's refusals, and each level's spend.
 - **Manifest**: One per invocation, with a format version. It records:
   - the commit that the snapshot was taken from and, where the snapshot differs from it, the diff of the agents, skills, and suite, untracked files included;
   - the wrapper's own uncommitted changes, including those to `pyproject.toml` and `uv.lock`, untracked files included;
   - the versions of Claude Code and nono, and the model that each run used;
   - the judge model, the effort level, and the credential source (never the credential itself);
-  - the environment that was set, and the subset of agents and levels;
+  - the environment that was set, and the agents, cases, and levels chosen;
   - every utilisation reading that the wrapper took, with its week's reset time, on the subscription;
   - the proxy's refusals and failures to reach an allowed host, and the exit statuses.
 - **Exit status**: Distinguishes every case meeting the threshold, a case below it, inconclusive runs, the spend cap, spend that cannot be measured, a refusal to start, and an interruption. This is a contract with whoever calls the wrapper, agents included, so it only changes by addition.
@@ -282,6 +290,7 @@ flowchart TB
 | The main session does not delegate as asked | The delegating session | The run is inconclusive |
 | The agent ran at another effort level | The harness or the account | The run is inconclusive |
 | A completed run fails a grader | The agent, or the case | The run fails |
+| A run reaches its time or turn limit | The agent, if it had already failed a prohibition of the trace; otherwise unknown (the agent, or a slow API) | The run fails in the first case, unless another cause makes it inconclusive, and is inconclusive in the second |
 | The harness exits abnormally, times out, or leaves no readable result | The harness | The wrapper stops every process the call started, and the call's unfinished runs are inconclusive; the next reading measures what it spent, or, with an API key, the call is charged its full cap |
 | The operator interrupts an invocation | The operator | The wrapper stops every process the call started, takes its last reading (with an API key, charges the call its full cap), records what it has, and stops |
 
@@ -308,12 +317,14 @@ Only the owner deploys the suite, so these are named by product.
   - By default it publishes its report to claude.ai whenever the account allows it, which a remote flag decides, so the suite always tells it not to.
   - By default it writes results inside the plugin.
   - It skips the judge for a run once the spend cap is reached, and marks that run's LLM graders as failed.
+  - It grades a run that it cuts short as it would a completed one, judge included.
   - Its behaviour changes between patch releases. For example, the setting for a delegated agent's effort first appears in a release after 2.1.312, by 2.1.317. So the version is pinned, only a reviewed change moves it, and the pin must be at least the first release with that setting.
 - **Claude Code, running the runs and the usage readings**: Delegation, skill preloading, reporting the utilisation that the API returns, and retrying API errors with backoff. Its caveats are:
   - A remote experiment can lower a delegated agent's effort unless the effort is set explicitly, so it always is.
   - A settings maximum or an organisation cap can lower the effort without saying so, which is why each run must confirm it.
   - Claude Code's own honouring of the proxy settings is the only thing that keeps it to the allowed hosts.
   - Its order of precedence would pick one of two credentials without saying which, so exactly one is passed.
+  - Its trace leaves out a nested agent's tool calls, and only carries progress summaries of them, which is what lets a grader of the trace tell the agent's own calls from a nested agent's. A version that recorded them with a `parent_tool_use_id` would fail an agent for delegating.
 - **nono's binary, through Landlock and seccomp**: Kernel-enforced confinement, which every descendant inherits. Its caveats are:
   - It is used on Linux only, for now.
   - It has not reached version 1.0. It is pinned to an exact release, at least the one that fixes every advisory published before it, and the wrapper checks the binary's hash against the pin on every invocation.
@@ -359,7 +370,11 @@ Outside any invocation, installing the suite contacts the npm registry, for the 
 ### Limitations
 
 - **Linux only**: Operators on macOS or Windows bear this. Their workaround is to run the harness directly, without the suite's protections.
-- **Slow**: Runs go one at a time, so a full run may take many hours; the pilot measures how many. The operator bears this, and can run a subset of agents or levels instead.
+- **Slow**: Runs go one at a time, so a full run at `low` takes about 1.5 hours, and up to 9 if every run reaches its 5-minute cap. Each further level adds as much again. The operator bears this, and can run a subset of agents instead.
+- **Routine runs only test `low`**: A regression that only shows at a higher level goes unnoticed until someone runs that level. The owner bears this, and can run other levels on demand.
+- **A run cut short can fail but never pass**: So wherever runs are cut short, the pass counts understate the agent. The owner and the authors bear this, and the summary sets those failures apart.
+- **Telling the agent's own calls from a nested agent's relies on the pinned trace format**: A bump of the pin that recorded a nested agent's calls as the agent's would fail it for delegating. The owner bears this, and the next full run would show it.
+- **In three of the four domain cases, only the judge decides whether the agent handed the work to another agent**: It decides from the answer, so an agent that did the work itself and said otherwise would pass. The owner bears this, and the run's trace shows whether the agent delegated.
 - **One invocation at a time**: Agents acting for the owner in different worktrees must take turns, since the wrapper refuses a second invocation rather than queueing it. They bear this, and can start again once the first invocation ends.
 - **The budget only counts invocations under this account on this machine**: Invocations from another machine, or another user account, on the same subscription are missing from the ledger. The owner bears this, and avoids it by running the suite from one machine and account only.
 - **The last harness call can take the week past 10%**: The budget is checked before each call, so the call that crosses 10 points runs to its end, within its dollar cap. The owner bears this. The next reading records the excess, so no further invocation runs that week.
@@ -379,7 +394,7 @@ Outside any invocation, installing the suite contacts the npm registry, for the 
 
 ### Ethical costs
 
-- **Energy**: Each full run is hundreds of Opus sessions plus judge calls, and everyone bears the cost. Running each case only with the plugin halves it, and running subsets reduces it further. It cannot be removed, because measuring a model's behaviour takes running the model.
+- **Energy**: Each full run is over two hundred Opus sessions (a delegating session and an agent per run, plus any agents that those delegate to) plus judge calls, and everyone bears the cost. Running each case only with the plugin halves it, running one level by default cuts it to a third, and running subsets reduces it further. It cannot be removed, because measuring a model's behaviour takes running the model.
 - **The owner's shared allowance**: Subscription runs take up to 10% of each week's allowance, plus what the last harness call spends, from the owner's other work and agents, which never chose to share it. The owner chose that limit; the design can only enforce it.
 - **Installations**: People who install the plugin carry fixtures they never use. The design cannot avoid this whilst the marketplace installs the whole repository.
 

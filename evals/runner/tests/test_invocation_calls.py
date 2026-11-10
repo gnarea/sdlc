@@ -26,9 +26,13 @@ NOW = datetime(2026, 11, 9, 12, tzinfo=UTC)
 RESET = datetime(2026, 11, 13, 12, tzinfo=UTC)
 NEXT_RESET = RESET + timedelta(days=7)
 CALL_SPEND_USD = 0.25
-REVIEW = Case("programmer/review", "programmer", 3, frozenset({"Read"}), timedelta(seconds=900))
-DOMAIN = Case("architect/domain", "architect", 2, frozenset({"Read"}), timedelta(seconds=300))
-SELECTION = CaseSelection((REVIEW, DOMAIN), ("programmer", "architect"), None, None)
+REVIEW = Case(
+    "programmer/review", "programmer", 3, frozenset({"Read"}), timedelta(seconds=900), frozenset()
+)
+DOMAIN = Case(
+    "architect/domain", "architect", 2, frozenset({"Read"}), timedelta(seconds=300), frozenset()
+)
+SELECTION = CaseSelection((REVIEW, DOMAIN), ("programmer", "architect"), None)
 LEVELS = (EffortLevel.LOW, EffortLevel.HIGH)
 SUBSCRIPTION_PLAN = CallPlan(SELECTION, LEVELS, SubscriptionChoice())
 

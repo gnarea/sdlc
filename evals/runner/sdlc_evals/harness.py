@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
 
-from .code_check import Case
+from .code_check import Case, Suite
 from .invocation_directory import ConfinedDirectory
 from .levels import EffortLevel
 from .state.trust import ConfirmedTrust
@@ -26,14 +26,46 @@ GRADING_ALLOWANCE = timedelta(minutes=5)
 CALL_OVERHEAD = timedelta(minutes=10)
 
 
+class InvalidSelection(Exception):
+    """The operator chose an agent or a case that the suite lacks, or agents without cases.
+    Retrying won't help: choose among the suite's agents and their cases.
+    """
+
+
 @dataclass(frozen=True)
 class CaseSelection:
-    """Which cases an invocation runs, and how many times."""
+    """Which cases an invocation runs, in the suite's order, and how many times."""
 
     cases: tuple[Case, ...]
     agents: tuple[str, ...]
-    case_name: str | None
     runs_per_case: int | None
+
+    @classmethod
+    def make(
+        cls,
+        suite: Suite,
+        agents: tuple[str, ...] | None,
+        case_names: frozenset[str] | None,
+        runs_per_case: int | None,
+    ) -> CaseSelection:
+        """Select the cases of the agents named, or of every agent, and only those named, if any."""
+        chosen_agents = agents or suite.agents
+        unknown_agents = sorted(set(chosen_agents) - set(suite.agents))
+        if unknown_agents:
+            raise InvalidSelection(
+                f"Agents must be among {list(suite.agents)} (got {unknown_agents})"
+            )
+        cases = tuple(case for case in suite.cases if case.agent in chosen_agents)
+        if case_names is not None:
+            unknown_cases = sorted(case_names - {case.name for case in cases})
+            if unknown_cases:
+                raise InvalidSelection(
+                    f"Cases must be among those of the chosen agents (got {unknown_cases})"
+                )
+            cases = tuple(case for case in cases if case.name in case_names)
+        if not cases:
+            raise InvalidSelection("The chosen agents have no cases")
+        return cls(cases=cases, agents=tuple(chosen_agents), runs_per_case=runs_per_case)
 
     def runs_of(self, case: Case) -> int:
         return self.runs_per_case or case.runs

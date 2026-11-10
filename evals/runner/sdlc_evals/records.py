@@ -1,6 +1,7 @@
 """What an invocation leaves for the operator: the manifest, the summary, and the exit status."""
 
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -11,15 +12,16 @@ from .credentials import CredentialSource
 from .egress_proxy import Refusal, UpstreamFailure
 from .exit_status import ExitStatus
 from .harness import JUDGE_MODEL, MODEL, CaseSelection
-from .harness_call import CallRecord
+from .harness_call import CallRecord, RunRecord
 from .invocation_calls import StopReason
 from .levels import EffortLevel
 from .spend import WEEKLY_BUDGET_POINTS, ApiKeyBudget, SubscriptionBudget, week_charge_points
 from .state.ledger import LedgerEntry, WeeklyUtilisation
 from .working_tree import CodeRecord, FilesRecord
 
-MANIFEST_FORMAT_VERSION = 2
-# A case meets the threshold at a level when this share of its completed runs passed.
+MANIFEST_FORMAT_VERSION = 4
+# A case meets the threshold at a level when this share of the runs that its pass count covers
+# passed.
 PASS_THRESHOLD = 1.0
 _EXIT_STATUS_BY_STOP_REASON = {
     StopReason.INTERRUPTED: ExitStatus.INTERRUPTED,
@@ -55,25 +57,41 @@ class InvocationRecord:
 
 @dataclass(frozen=True)
 class CaseLevelCount:
+    """A case's runs at a level. Its pass count covers the completed runs, and the runs cut short
+    that failed, which are among those counted as failed.
+    """
+
     case: str
     level: EffortLevel
     passed: int
-    completed: int
+    failed: int
+    cut_short_failures: int
     inconclusive: int
 
     @property
+    def counted(self) -> int:
+        return self.passed + self.failed
+
+    @property
     def is_below_threshold(self) -> bool:
-        return 0 < self.completed and self.passed / self.completed < PASS_THRESHOLD
+        return 0 < self.counted and self.passed / self.counted < PASS_THRESHOLD
 
 
 def count_passes(calls: tuple[CallRecord, ...]) -> tuple[CaseLevelCount, ...]:
     counts: list[CaseLevelCount] = []
     for call in calls:
-        outcomes = Counter(run.classification.outcome for run in call.runs)
-        passed, failed = outcomes[Outcome.PASSED], outcomes[Outcome.FAILED]
+        classifications = [run.classification for run in call.runs]
+        outcomes = Counter(classification.outcome for classification in classifications)
         counts.append(
             CaseLevelCount(
-                call.case, call.level, passed, passed + failed, outcomes[Outcome.INCONCLUSIVE]
+                case=call.case,
+                level=call.level,
+                passed=outcomes[Outcome.PASSED],
+                failed=outcomes[Outcome.FAILED],
+                cut_short_failures=sum(
+                    1 for classification in classifications if classification.is_cut_short_failure
+                ),
+                inconclusive=outcomes[Outcome.INCONCLUSIVE],
             )
         )
     return tuple(counts)
@@ -86,7 +104,7 @@ def decide_exit_status(record: InvocationRecord) -> ExitStatus:
     if any(count.is_below_threshold for count in counts):
         return ExitStatus.BELOW_THRESHOLD
     if record.stop_reason is not None or any(
-        count.inconclusive or not count.completed for count in counts
+        count.inconclusive or not count.counted for count in counts
     ):
         return ExitStatus.INCONCLUSIVE
     return ExitStatus.THRESHOLD_MET
@@ -112,7 +130,7 @@ def render_manifest(record: InvocationRecord, exit_status: ExitStatus) -> dict[s
         "subset": {
             "agents": list(record.selection.agents),
             "levels": [level.value for level in record.levels_requested],
-            "case": record.selection.case_name,
+            "cases": [case.name for case in record.selection.cases],
             "runs_per_case": record.selection.runs_per_case,
         },
         "self_test": {"passed": True, "checks": record.self_test_checks},
@@ -139,21 +157,22 @@ def render_summary(record: InvocationRecord, exit_status: ExitStatus) -> str:
         f"Code: {record.code.commit}{_describe_changes(record.code)}",
         f"Claude Code {record.claude_code_version}, {MODEL} (judge {JUDGE_MODEL}), credential: {record.credential_source}",
         "",
-        "Pass counts (completed runs):",
+        "Pass counts (completed runs, and runs cut short that failed):",
     ]
-    counts = count_passes(record.calls)
     lines += [
-        f"  {count.case}  {count.level}  {count.passed}/{count.completed}"
-        + (f"  ({count.inconclusive} inconclusive)" if count.inconclusive else "")
-        for count in counts
+        f"  {count.case}  {count.level}  {count.passed}/{count.counted}{_describe_set_apart(count)}"
+        for count in count_passes(record.calls)
     ] or ["  none"]
+    lines += ["", "Failures of runs cut short:"]
+    lines += _describe_runs(record, lambda run: run.classification.is_cut_short_failure)
     lines += ["", "Inconclusive runs:"]
-    lines += [
-        f"  {run.case}  {call.level}  run {run.index}: {run.classification.cause} ({run.classification.detail})"
-        for call in record.calls
-        for run in call.runs
-        if run.classification.outcome is Outcome.INCONCLUSIVE
-    ] or ["  none"]
+    lines += _describe_runs(
+        record, lambda run: run.classification.outcome is Outcome.INCONCLUSIVE
+    )
+    cases_run = {call.case for call in record.calls}
+    cases_not_run = [case.name for case in record.selection.cases if case.name not in cases_run]
+    if cases_not_run:
+        lines += ["", "Not run:", *(f"  {name}" for name in cases_not_run)]
     runs = [run for call in record.calls for run in call.runs]
     confirmed = sum(1 for run in runs if run.classification.is_effort_confirmed)
     lines += ["", f"Effort level confirmed for {confirmed} of {len(runs)} run(s)."]
@@ -178,11 +197,19 @@ def render_brief(record: InvocationRecord, exit_status: ExitStatus, summary: Pat
         by_case.setdefault(count.case, []).append(count)
     lines = [
         f"{case}: "
-        + ", ".join(f"{count.level} {count.passed}/{count.completed}" for count in counts)
+        + ", ".join(
+            f"{count.level} {count.passed}/{count.counted}"
+            + (f" ({count.cut_short_failures} cut short)" if count.cut_short_failures else "")
+            for count in counts
+        )
         for case, counts in by_case.items()
-        if any(count.passed < count.completed for count in counts)
+        if any(count.failed for count in counts)
     ]
-    outcomes = Counter(run.classification.outcome for call in record.calls for run in call.runs)
+    classifications = [run.classification for call in record.calls for run in call.runs]
+    outcomes = Counter(classification.outcome for classification in classifications)
+    cut_short_failures = sum(
+        1 for classification in classifications if classification.is_cut_short_failure
+    )
     causes = Counter(
         str(run.classification.cause)
         for call in record.calls
@@ -191,7 +218,9 @@ def render_brief(record: InvocationRecord, exit_status: ExitStatus, summary: Pat
     )
     tally = (
         f"{outcomes[Outcome.PASSED]} of {outcomes.total()} runs passed, "
-        f"{outcomes[Outcome.FAILED]} failed, {outcomes[Outcome.INCONCLUSIVE]} inconclusive"
+        f"{outcomes[Outcome.FAILED]} failed"
+        + (f" ({cut_short_failures} cut short)" if cut_short_failures else "")
+        + f", {outcomes[Outcome.INCONCLUSIVE]} inconclusive"
     )
     if causes:
         tally += " (" + ", ".join(f"{cause} × {n}" for cause, n in sorted(causes.items())) + ")"
@@ -203,6 +232,26 @@ def render_brief(record: InvocationRecord, exit_status: ExitStatus, summary: Pat
         f"Details: {summary}"
     )
     return "\n".join(lines) + "\n"
+
+
+def _describe_set_apart(count: CaseLevelCount) -> str:
+    notes = []
+    if count.cut_short_failures:
+        notes.append(f"{count.cut_short_failures} of the failures cut short")
+    if count.inconclusive:
+        notes.append(f"{count.inconclusive} inconclusive")
+    return f"  ({', '.join(notes)})" if notes else ""
+
+
+def _describe_runs(
+    record: InvocationRecord, is_described: Callable[[RunRecord], bool]
+) -> list[str]:
+    return [
+        f"  {run.case}  {call.level}  run {run.index}: {run.classification.cause} ({run.classification.detail})"
+        for call in record.calls
+        for run in call.runs
+        if is_described(run)
+    ] or ["  none"]
 
 
 def _describe_spend(record: InvocationRecord) -> list[str]:

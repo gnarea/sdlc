@@ -197,7 +197,7 @@ def _classify_one(
     record = RunRecord(
         case=case.name,
         index=index,
-        classification=classify_run(run, trace, case.agent, level),
+        classification=classify_run(run, trace, case, level),
         cost_usd=run.cost_usd,
         main_models=tuple(sorted(trace.main_models)) if trace else (),
         delegated_models=tuple(sorted(trace.delegated_models)) if trace else (),

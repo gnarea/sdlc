@@ -1,6 +1,6 @@
 # Agent eval suite
 
-The suite measures how reliably the plugin's agents behave as their definitions say. Each case asks a main session to delegate a request to one agent, and grades what the agent did. The wrapper in `runner/` runs Claude Code's plugin eval harness under kernel-enforced confinement, once for each case at each effort level, within the approved budget.
+The suite measures how reliably the plugin's agents behave as their definitions say. Each case asks a main session to delegate a request to one agent, and grades what the agent did. The wrapper in `runner/` runs Claude Code's plugin eval harness under kernel-enforced confinement, once for each case at each effort level requested, within the approved budget.
 
 ## Setting up
 
@@ -40,7 +40,7 @@ Before each harness call, the wrapper records a _provisional charge_ for the res
 
 ## Running it
 
-Run every agent at every level:
+Run every agent at `low` effort, which is what a routine full run checks:
 
 ```shell
 uv run --locked python -I -B evals/runner run
@@ -48,15 +48,18 @@ uv run --locked python -I -B evals/runner run
 
 The first time you run it in a worktree, it asks you at your terminal to confirm that you trust the worktree. Review the change first: the code check keeps unexpected code from running, but anything that does run can read the credential.
 
-The wrapper starts the harness once for each case at each level. It runs each case at every level before the next, so that an invocation that stops early still compares the levels on the cases it covered.
+To run other levels instead, pass `--level` once for each (e.g., `--level medium --level high`). A pass at `low` doesn't show that a higher level behaves the same, so run the others now and then. The wrapper starts the harness once for each case at each level. It runs each case at every level before the next, so that an invocation that stops early still compares the levels on the cases it covered.
 
-To run a subset, use `--agent` and `--level` (each repeatable), or `--case (agent)/(case)` with `--runs (1 to 3)`. For example, the pilot runs one case once per level:
+To run a subset, use `--agent` or `--case (agent)/(case)`, both repeatable, and `--runs (1 to 3)`. Since every invocation on the subscription costs at least a point, name all the cases you need in one invocation. For example, the pilot runs one case once at each level:
 
 ```shell
-uv run --locked python -I -B evals/runner run --case programmer/review-implied --runs 1
+uv run --locked python -I -B evals/runner run --case programmer/review-implied --runs 1 \
+  --level low --level medium --level high
 ```
 
 The wrapper prints the invocation's directory, which is under `TMPDIR` (by default `/tmp`). It holds `summary.txt`, `manifest.json`, the traces, and the snapshot of the plugin that ran. Copy anything you want to keep, then delete the directory.
+
+A run that reaches its case's time limit (4 minutes at most) or turn limit is cut short. It's inconclusive, unless it failed a prohibition of the trace (see [Writing a case](#writing-a-case)) and nothing else made it inconclusive, in which case it fails. The summary sets apart the failures of runs cut short, since such a run can fail but never pass.
 
 The exit status tells you how it went:
 
@@ -74,7 +77,7 @@ The exit status tells you how it went:
 
 Each case is a directory at `evals/(agent)/(case)/`, with:
 
-- `prompt.md`: the frontmatter (`tags`, `runs`, `max_turns`, `timeout_seconds`, `allowed_tools`, and optionally `description` and `disallowed_tools`), then the prompt. The prompt starts with the delegation preface in `delegation-preface.md`, with the agent's name in place of `(agent)`, and puts the request in `<request>` tags.
+- `prompt.md`: the frontmatter (`tags`, `runs`, `max_turns`, `timeout_seconds` of 240 at most, `allowed_tools`, and optionally `description` and `disallowed_tools`), then the prompt. The prompt starts with the delegation preface in `delegation-preface.md`, with the agent's name in place of `(agent)`, and puts the request in `<request>` tags.
 - `case.yaml`: the case's name and the fixture-copying step. Copy it from another case and change the name.
 - `scaffold.sh`: the fixture-copying step, which must be identical in every case. Copy it from another case.
 - `graders/`: the graders, which always include `delegated.md` and `request-passed-on.md`. The wrapper counts a run whose delegation graders fail as inconclusive, since the delegating session caused it.
@@ -82,7 +85,9 @@ Each case is a directory at `evals/(agent)/(case)/`, with:
 
 Every run can write within its workspace, since Write and Edit are granted to the whole invocation. A case that must not write withholds them with `disallowed_tools: [Write, Edit]`.
 
-`tool_used` graders can't tell the agent's tool calls from the delegating session's. To check that the agent itself made a call, use a `regex` grader on the trace, whose lines for the agent's messages carry a `parent_tool_use_id`.
+`tool_used` graders can't tell the agent's tool calls from the delegating session's. To check that the agent itself made a call, use a `regex` grader on the trace, whose lines for the agent's messages carry a `parent_tool_use_id`. A nested agent's calls aren't in the trace.
+
+A run cut short only fails on a _prohibition of the trace_: a `regex` grader with `target: trace` and `match: not_contains`, or a `tool_used` grader with `min: 0` (the harness takes a missing `min` as 1). The trace only grows, so a prohibition that failed when the run was cut short would still fail at its end. A `regex` prohibition's pattern mustn't depend on what follows a match (e.g., with a lookahead), since a later part of the trace could then undo the match. No other grader counts on a run cut short, so grade what the agent mustn't do in the trace wherever it shows there.
 
 ## How the wrapper works
 

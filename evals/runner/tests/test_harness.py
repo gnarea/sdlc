@@ -5,8 +5,13 @@ import unittest
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from sdlc_evals.code_check import Case
-from sdlc_evals.harness import HarnessCall, make_harness_command
+from sdlc_evals.code_check import Case, Suite
+from sdlc_evals.harness import (
+    CaseSelection,
+    HarnessCall,
+    InvalidSelection,
+    make_harness_command,
+)
 from sdlc_evals.harness_results import (
     HarnessResultUnreadable,
     collect_sandboxes,
@@ -20,9 +25,75 @@ from sdlc_evals.state.ledger import WeeklyUtilisation
 from sdlc_evals.state.trust import ConfirmedTrust
 
 CASE = Case(
-    "programmer/review-implied", "programmer", 3, frozenset({"Read"}), timedelta(seconds=900)
+    "programmer/review-implied",
+    "programmer",
+    3,
+    frozenset({"Read"}),
+    timedelta(seconds=900),
+    frozenset(),
 )
-OTHER = Case("architect/domain", "architect", 3, frozenset({"Read"}), timedelta(seconds=300))
+OTHER = Case(
+    "architect/domain", "architect", 3, frozenset({"Read"}), timedelta(seconds=300), frozenset()
+)
+PROGRAMMER_DOMAIN = Case(
+    "programmer/domain", "programmer", 3, frozenset({"Read"}), timedelta(seconds=300), frozenset()
+)
+SUITE = Suite(
+    agents=("architect", "programmer", "prototyper"), cases=(OTHER, PROGRAMMER_DOMAIN, CASE)
+)
+
+
+class CaseSelectionTest(unittest.TestCase):
+    def test_selects_the_chosen_cases_in_the_suites_order(self) -> None:
+        every_agent = ("architect", "programmer", "prototyper")
+        selections = [
+            ("every case", None, None, every_agent, (OTHER, PROGRAMMER_DOMAIN, CASE)),
+            ("an agent's cases", ("programmer",), None, ("programmer",), (PROGRAMMER_DOMAIN, CASE)),
+            (
+                "cases named out of order",
+                None,
+                frozenset({CASE.name, OTHER.name}),
+                every_agent,
+                (OTHER, CASE),
+            ),
+            (
+                "a case of an agent",
+                ("programmer",),
+                frozenset({CASE.name}),
+                ("programmer",),
+                (CASE,),
+            ),
+        ]
+        for label, agents, case_names, expected_agents, expected_cases in selections:
+            with self.subTest(label):
+                selection = CaseSelection.make(SUITE, agents, case_names, 1)
+
+                self.assertEqual(
+                    (selection.agents, selection.cases, selection.runs_per_case),
+                    (expected_agents, expected_cases, 1),
+                )
+
+    def test_refuses_a_choice_that_the_suite_lacks_naming_it(self) -> None:
+        refusals = [
+            (
+                ("tester",),
+                None,
+                "Agents must be among ['architect', 'programmer', 'prototyper'] (got ['tester'])",
+            ),
+            (
+                ("programmer",),
+                frozenset({CASE.name, OTHER.name, "programmer/nope"}),
+                "Cases must be among those of the chosen agents "
+                "(got ['architect/domain', 'programmer/nope'])",
+            ),
+            (("prototyper",), None, "The chosen agents have no cases"),
+        ]
+        for agents, case_names, expected in refusals:
+            with self.subTest(expected):
+                with self.assertRaises(InvalidSelection) as raised:
+                    CaseSelection.make(SUITE, agents, case_names, None)
+
+                self.assertEqual(str(raised.exception), expected)
 
 
 class MakeHarnessCommandTest(unittest.TestCase):

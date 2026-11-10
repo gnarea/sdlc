@@ -28,8 +28,8 @@ People or agents who change the plugin, its skills, the cases, or the fixtures o
 The model, following an agent definition and a case's fixture, which may contain text that steers it.
 
 - **Goals**: None hostile, but it may act on whatever the fixture asks, take actions with effects beyond its workspace, or write output that sways the judge.
-- **Capabilities**: The tools that a run is offered, within the confinement.
-- **Resources**: As many turns and as much time as the harness allows each run.
+- **Capabilities**: The tools that a run is offered, within the confinement, including delegating to other agents, whose tool calls the trace leaves out.
+- **Resources**: Up to 4 minutes and its case's turn limit, for each run.
 
 ### The operator, or an agent acting for the owner
 
@@ -121,20 +121,29 @@ The code could arrive as a hook, an MCP or LSP server, a shell command embedded 
   - The confinement refuses an operation that a tool needs.
   - The delegating session fails to delegate.
   - The spend cap stops the judge partway through a harness call.
+  - A run is cut short before it does what its case requires.
+  - An agent that the agent under test delegates to does work that the agent is credited or blamed for.
   - The agent's output steers the judge, or a case author weakens a grader.
 - **Mitigations**:
   - The three outcomes, which treat every cause outside the agent as inconclusive.
+  - A run cut short counts as failed only on a prohibition of the trace, which no later step can undo, and only where no other cause makes it inconclusive. No other grader counts on it.
+  - A grader of the trace can match only the agent's own calls, which carry a `parent_tool_use_id`, so that work the agent hands to another agent isn't held against it.
   - Each run confirms its effort, using whichever method the pilot settles.
   - The pinned harness, and the tool check after each harness call.
   - The snapshot, so that every harness call runs the same code.
   - The manifest, which ties every result to its code, harness, models, effort, and credential source.
   - Rules grade whatever they can, and the judge only what rules cannot.
-- **Residual risks**: The mitigations fall short in three cases:
+- **Residual risks**: The mitigations fall short in eight cases:
   - Runs use the pinned version's default feature flags, so behaviour that a remote flag changes in the owner's own sessions goes untested.
-  - The agent's output can still steer the judge on criteria that only the judge grades.
+  - Routine runs only test `low`, so a regression that only shows at a higher level ships unless someone runs that level.
+  - The agent's output can still steer the judge on criteria that only the judge grades. That includes saying that another agent did the work, in the three domain cases where only the judge decides it.
   - A weakened grader passes a review.
+  - A prohibition of the trace whose pattern depends on what follows its match (e.g., through a lookahead) can fail when the run is cut short, and pass at its end.
+  - A run cut short can fail but never pass, so the pass counts understate the agent wherever runs are cut short. The summary sets those failures apart.
+  - A bump of the pin that recorded a nested agent's tool calls as the agent's own would fail the agent for delegating.
+  - Graders of the workspace cannot tell the agent's changes from those of an agent it delegated to, so a nested agent's change counts against the agent.
 
-  The owner and the authors bear these, and can accept them, since a failure is always traceable to the run that produced it.
+  The owner and the authors bear these, and can accept them, since a failure is always traceable to the run that produced it, and other levels can run on demand.
 
 ### The credential leaves the machine
 

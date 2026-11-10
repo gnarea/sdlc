@@ -13,7 +13,7 @@ PROMPT = """---
 tags: [programmer]
 runs: 3
 max_turns: 20
-timeout_seconds: 900
+timeout_seconds: 240
 allowed_tools: [Read, Glob, Grep, Skill, Agent]
 ---
 
@@ -214,6 +214,12 @@ REFUSALS: list[tuple[str, Callable[[Path], None], str, str]] = [
         "runs must be",
     ),
     (
+        "timeout above range",
+        replace_in(PROMPT_PATH, "timeout_seconds: 240", "timeout_seconds: 241"),
+        PROMPT_PATH,
+        "timeout_seconds must be an integer from 1 to 240",
+    ),
+    (
         "grader type",
         write(f"{CASE}/graders/x.md", "---\ntype: script\n---\n"),
         f"{CASE}/graders/x.md",
@@ -258,6 +264,31 @@ REFUSALS: list[tuple[str, Callable[[Path], None], str, str]] = [
 ]
 
 
+TRACE_PROHIBITIONS = [
+    (
+        "regex that the trace must not match",
+        "type: regex\ntarget: trace\npattern: x\nmatch: not_contains\n",
+        True,
+    ),
+    ("tool call forbidden", "type: tool_used\ntool: Skill\nmin: 0\nmax: 0\n", True),
+    ("tool call optional", "type: tool_used\ntool: Skill\nmin: 0\n", True),
+    ("tool call capped", "type: tool_used\ntool: Skill\nmax: 1\n", False),
+    ("tool call required", "type: tool_used\ntool: Skill\nmin: 1\nmax: 1\n", False),
+    ("regex that the trace must match", "type: regex\ntarget: trace\nmatch: contains\n", False),
+    ("regex with the default match", "type: regex\ntarget: trace\npattern: x\n", False),
+    ("regex counting matches", "type: regex\ntarget: trace\nmatch: count:0\n", False),
+    ("regex of the answer", "type: regex\npattern: x\nmatch: not_contains\n", False),
+    (
+        "regex of a file",
+        "type: regex\ntarget: {source: file, path: a.md}\nmatch: not_contains\n",
+        False,
+    ),
+    ("regex of the changed files", "type: regex\ntarget: files\nmatch: not_contains\n", False),
+    ("file forbidden", "type: file_exists\npath: a.py\nexists: false\n", False),
+    ("judge", "type: llm\n", False),
+]
+
+
 class CodeCheckTest(unittest.TestCase):
     def setUp(self) -> None:
         temporary = tempfile.TemporaryDirectory()
@@ -273,21 +304,53 @@ class CodeCheckTest(unittest.TestCase):
             agent="programmer",
             runs=3,
             allowed_tools=frozenset({"Read", "Glob", "Grep", "Skill", "Agent"}),
-            timeout=timedelta(seconds=900),
+            timeout=timedelta(seconds=240),
+            trace_prohibitions=frozenset(),
         )
         self.assertEqual(result, Suite(agents=("programmer",), cases=(expected_case,)))
 
     def test_accepts_the_boundaries_of_each_range(self) -> None:
-        for runs in ("1", "50"):
-            with self.subTest(runs=runs):
+        cases: list[tuple[str, str, Callable[[Case], object], object]] = [
+            ("runs: 3", "runs: 1", lambda case: case.runs, 1),
+            ("runs: 3", "runs: 50", lambda case: case.runs, 50),
+            (
+                "timeout_seconds: 240",
+                "timeout_seconds: 1",
+                lambda case: case.timeout,
+                timedelta(seconds=1),
+            ),
+            (
+                "timeout_seconds: 240",
+                "timeout_seconds: 240",
+                lambda case: case.timeout,
+                timedelta(seconds=240),
+            ),
+        ]
+        for default, boundary, read, expected in cases:
+            with self.subTest(boundary):
                 make_tree(self.root)
-                replace_in(PROMPT_PATH, "runs: 3", f"runs: {runs}")(self.root)
+                replace_in(PROMPT_PATH, default, boundary)(self.root)
 
                 result = check_plugin_snapshot(self.root, self.root)
 
                 self.assertIsInstance(result, Suite)
                 assert isinstance(result, Suite)
-                self.assertEqual(result.cases[0].runs, int(runs))
+                self.assertEqual(read(result.cases[0]), expected)
+
+    def test_finds_the_graders_of_the_trace_that_only_forbid_something(self) -> None:
+        for label, frontmatter, is_trace_prohibition in TRACE_PROHIBITIONS:
+            with self.subTest(label):
+                make_tree(self.root)
+                write(f"{CASE}/graders/x.md", f"---\n{frontmatter}---\n\nNo change.\n")(self.root)
+
+                result = check_plugin_snapshot(self.root, self.root)
+
+                self.assertIsInstance(result, Suite)
+                assert isinstance(result, Suite)
+                self.assertEqual(
+                    result.cases[0].trace_prohibitions,
+                    frozenset({"x"}) if is_trace_prohibition else frozenset(),
+                )
 
     def test_accepts_withholding_write_and_edit(self) -> None:
         replace_in(PROMPT_PATH, "runs: 3", "runs: 3\ndisallowed_tools: [Write, Edit]")(self.root)

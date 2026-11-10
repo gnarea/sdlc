@@ -11,3 +11,7 @@ class EffortLevel(enum.StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+
+
+# The lowest level expected to be good enough, which is what a routine full run checks.
+DEFAULT_LEVEL = EffortLevel.LOW

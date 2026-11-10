@@ -278,12 +278,12 @@ class OptionsTest(unittest.TestCase):
         self.assertEqual(parse_command(["store-token"]), ("store-token", None))
         self.assertEqual(parse_command(["clear-charge"]), ("clear-charge", None))
 
-    def test_defaults_to_every_agent_and_level_on_the_subscription(self) -> None:
+    def test_defaults_to_every_agent_at_low_effort_on_the_subscription(self) -> None:
         options = self._options()
 
         self.assertEqual(
-            (options.agents, options.levels, options.credential),
-            (None, tuple(EffortLevel), SubscriptionChoice()),
+            (options.agents, options.levels, options.case_names, options.credential),
+            (None, (EffortLevel.LOW,), None, SubscriptionChoice()),
         )
 
     def test_takes_a_subset_and_an_api_key_cap(self) -> None:
@@ -298,6 +298,10 @@ class OptionsTest(unittest.TestCase):
             "high",
             "--case",
             "programmer/review-implied",
+            "--case",
+            "programmer/domain",
+            "--case",
+            "programmer/review-implied",
             "--runs",
             "1",
             "--credential",
@@ -309,9 +313,9 @@ class OptionsTest(unittest.TestCase):
         self.assertEqual(options.agents, ("programmer",))
         self.assertEqual(options.levels, (EffortLevel.HIGH, EffortLevel.LOW))
         self.assertEqual(
-            (options.case_name, options.runs_per_case, options.credential),
-            ("programmer/review-implied", 1, ApiKeyChoice(5.0)),
+            options.case_names, frozenset({"programmer/review-implied", "programmer/domain"})
         )
+        self.assertEqual((options.runs_per_case, options.credential), (1, ApiKeyChoice(5.0)))
 
     def test_refuses_an_ambiguous_or_missing_cap(self) -> None:
         for arguments in (

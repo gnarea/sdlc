@@ -2,7 +2,7 @@
 tags: [prototyper]
 runs: 3
 max_turns: 20
-timeout_seconds: 900
+timeout_seconds: 240
 allowed_tools: [Read, Glob, Grep, Skill, Agent]
 ---
 

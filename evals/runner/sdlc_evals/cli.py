@@ -14,7 +14,7 @@ from typing import NoReturn
 from .controlling_terminal import open_controlling_terminal
 from .exit_status import ExitStatus
 from .invocation import InvocationOptions, Operator, run_invocation, self_test_only
-from .levels import EffortLevel
+from .levels import DEFAULT_LEVEL, EffortLevel
 from .spend import ApiKeyChoice, SubscriptionChoice
 from .state.ledger import clear_provisional_charge, find_provisional_charges
 from .state.store import InvocationLockHeld, StateStore, StateStoreUnusable
@@ -69,7 +69,9 @@ def _make_parser() -> argparse.ArgumentParser:
         prog="evals/runner", description="Run the agent eval suite, confined, within budget."
     )
     commands = parser.add_subparsers(dest="command", required=True)
-    run = commands.add_parser("run", help="run the suite (all agents and levels by default)")
+    run = commands.add_parser(
+        "run", help=f"run the suite (every agent, at {DEFAULT_LEVEL} effort, by default)"
+    )
     run.add_argument(
         "--agent", action="append", dest="agents", help="an agent to test (repeatable)"
     )
@@ -78,9 +80,14 @@ def _make_parser() -> argparse.ArgumentParser:
         action="append",
         dest="levels",
         choices=[level.value for level in EffortLevel],
-        help="an effort level (repeatable)",
+        help=f"an effort level, instead of {DEFAULT_LEVEL} (repeatable)",
     )
-    run.add_argument("--case", dest="case_name", help="a single case, named (agent)/(case)")
+    run.add_argument(
+        "--case",
+        action="append",
+        dest="case_names",
+        help="a case, named (agent)/(case), instead of every case of the agents (repeatable)",
+    )
     run.add_argument(
         "--runs",
         dest="runs_per_case",
@@ -124,12 +131,12 @@ def _make_options(arguments: argparse.Namespace) -> InvocationOptions:
     levels = (
         tuple(EffortLevel(level) for level in arguments.levels)
         if arguments.levels
-        else tuple(EffortLevel)
+        else (DEFAULT_LEVEL,)
     )
     return InvocationOptions(
         agents=tuple(arguments.agents) if arguments.agents else None,
         levels=tuple(dict.fromkeys(levels)),
-        case_name=arguments.case_name,
+        case_names=frozenset(arguments.case_names) if arguments.case_names else None,
         runs_per_case=arguments.runs_per_case,
         credential=credential,
     )

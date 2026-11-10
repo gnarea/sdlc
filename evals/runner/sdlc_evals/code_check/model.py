@@ -20,13 +20,16 @@ class Finding:
 
 @dataclass(frozen=True)
 class Case:
-    """A case that passed the code check."""
+    """A case that passed the code check, with the names of its prohibitions of the trace: the
+    graders of the trace that only forbid something, which a run cut short can fail for good.
+    """
 
     name: str
     agent: str
     runs: int
     allowed_tools: frozenset[str]
     timeout: timedelta
+    trace_prohibitions: frozenset[str]
 
 
 @dataclass(frozen=True)

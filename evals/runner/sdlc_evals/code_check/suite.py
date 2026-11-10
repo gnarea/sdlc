@@ -81,8 +81,11 @@ FORBIDDEN_FIXTURE_NAMES = frozenset(
 HARNESS_SKIPPED_DIRECTORIES = frozenset({".git", "node_modules", ".claude", "results", "mocks"})
 CASE_MARKERS = frozenset({"prompt.md", "case.yaml"})
 
+# A longer cap would let one runaway run hold up a full run.
+MAX_TIMEOUT_SECONDS = 240
+
 _SLUG = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
-_RANGES = {"runs": (1, 50), "max_turns": (1, 200), "timeout_seconds": (1, 3600)}
+_RANGES = {"runs": (1, 50), "max_turns": (1, 200), "timeout_seconds": (1, MAX_TIMEOUT_SECONDS)}
 
 
 def check_suite(root: Path, agents: tuple[str, ...]) -> tuple[tuple[Case, ...], list[Finding]]:
@@ -174,9 +177,11 @@ def _check_case(
     findings = _check_case_entries(root, case_directory)
     findings += _check_case_yaml(root, case_directory, name)
     findings += _check_scaffold_script(root, case_directory)
-    findings += _check_graders(root, case_directory)
-    findings += _check_fixture(root, case_directory)
-    case, prompt_findings = _check_prompt(root, case_directory, name, agent, preface_template)
+    trace_prohibitions, grader_findings = _check_graders(root, case_directory)
+    findings += grader_findings + _check_fixture(root, case_directory)
+    case, prompt_findings = _check_prompt(
+        root, case_directory, name, agent, preface_template, trace_prohibitions
+    )
     return case, findings + prompt_findings
 
 
@@ -235,7 +240,12 @@ def _check_scaffold_script(root: Path, case_directory: Path) -> list[Finding]:
 
 
 def _check_prompt(
-    root: Path, case_directory: Path, name: str, agent: str, preface_template: str
+    root: Path,
+    case_directory: Path,
+    name: str,
+    agent: str,
+    preface_template: str,
+    trace_prohibitions: frozenset[str],
 ) -> tuple[Case | None, list[Finding]]:
     path = case_directory / "prompt.md"
     relative_path = _relative(root, path)
@@ -267,6 +277,7 @@ def _check_prompt(
         runs=numbers["runs"],
         allowed_tools=frozenset(document.frontmatter["allowed_tools"]),  # type: ignore[arg-type]
         timeout=timedelta(seconds=numbers["timeout_seconds"]),
+        trace_prohibitions=trace_prohibitions,
     )
     return case, []
 
@@ -302,45 +313,74 @@ def _read_numbers(frontmatter: dict[str, object]) -> tuple[dict[str, int], list[
     return numbers, problems
 
 
-def _check_graders(root: Path, case_directory: Path) -> list[Finding]:
+def _check_graders(root: Path, case_directory: Path) -> tuple[frozenset[str], list[Finding]]:
+    """Return the names of the case's prohibitions of the trace, and whatever the allowlists
+    refuse.
+    """
     graders_directory = case_directory / "graders"
     if not graders_directory.is_dir():
-        return []
+        return frozenset(), []
     findings: list[Finding] = []
     names: set[str] = set()
+    trace_prohibitions: set[str] = set()
     for entry in sorted(graders_directory.iterdir()):
         relative_path = _relative(root, entry)
         if not entry.is_file() or entry.suffix != ".md":
             findings.append(Finding(relative_path, "Graders must be Markdown files"))
             continue
         names.add(entry.stem)
-        findings += _check_grader(relative_path, entry)
+        frontmatter, grader_findings = _check_grader(relative_path, entry)
+        findings += grader_findings
+        if _is_trace_prohibition(frontmatter):
+            trace_prohibitions.add(entry.stem)
     findings += [
         Finding(
             _relative(root, graders_directory / f"{name}.md"), "Every case must have this grader"
         )
         for name in sorted(REQUIRED_GRADERS - names)
     ]
-    return findings
+    return frozenset(trace_prohibitions), findings
 
 
-def _check_grader(relative_path: PurePosixPath, path: Path) -> list[Finding]:
+def _check_grader(
+    relative_path: PurePosixPath, path: Path
+) -> tuple[dict[str, object], list[Finding]]:
     try:
         frontmatter = parse_markdown(read_exactly(path)).frontmatter
     except (OSError, UnicodeDecodeError) as error:
-        return [Finding(relative_path, f"Must be readable UTF-8 ({error.__class__.__name__})")]
+        return {}, [
+            Finding(relative_path, f"Must be readable UTF-8 ({error.__class__.__name__})")
+        ]
     except MalformedDocument as error:
-        return [Finding(relative_path, f"Must be Markdown with strict YAML frontmatter ({error})")]
+        return {}, [
+            Finding(relative_path, f"Must be Markdown with strict YAML frontmatter ({error})")
+        ]
     grader_type = frontmatter.get("type")
     if grader_type not in PERMITTED_GRADER_KEYS:
-        return [
+        return frontmatter, [
             Finding(
                 relative_path,
                 f"Grader type must be one of {sorted(PERMITTED_GRADER_KEYS)} (got {grader_type!r})",
             )
         ]
     permitted_keys = COMMON_GRADER_KEYS | PERMITTED_GRADER_KEYS[str(grader_type)]
-    return _keys_outside(relative_path, frontmatter, permitted_keys, "Grader key")
+    return frontmatter, _keys_outside(relative_path, frontmatter, permitted_keys, "Grader key")
+
+
+def _is_trace_prohibition(frontmatter: dict[str, object]) -> bool:
+    """Whether a grader of the trace only forbids something, so that a run cut short that failed
+    it would still fail it at its end, since the trace only grows.
+    """
+    match frontmatter.get("type"):
+        case "regex":
+            return (
+                frontmatter.get("target") == "trace" and frontmatter.get("match") == "not_contains"
+            )
+        case "tool_used":
+            # The harness takes a missing minimum as 1.
+            return frontmatter.get("min") == "0"
+        case _:
+            return False
 
 
 def _check_fixture(root: Path, case_directory: Path) -> list[Finding]:

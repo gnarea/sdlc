@@ -16,7 +16,7 @@ from .confinement import Confinement, NonoBinary, NonoUnavailable, Policy
 from .credentials import Credential, CredentialUnavailable, load_credential
 from .egress_proxy import EgressProxy
 from .exit_status import ExitStatus
-from .harness import CaseSelection
+from .harness import CaseSelection, InvalidSelection
 from .harness_call import CallContext, run_harness_call
 from .invocation_calls import CallPlan, run_calls
 from .invocation_directory import InvocationDirectory, UnsafeTemporaryRoot
@@ -68,7 +68,7 @@ FREE_SPACE_RESERVE_BYTES = 256 * 1024 * 1024
 class InvocationOptions:
     agents: tuple[str, ...] | None
     levels: tuple[EffortLevel, ...]
-    case_name: str | None
+    case_names: frozenset[str] | None
     runs_per_case: int | None
     credential: SubscriptionChoice | ApiKeyChoice
 
@@ -97,6 +97,7 @@ _REFUSAL_CAUSES = (
     CredentialUnavailable,
     UnsafeTemporaryRoot,
     CodeUnrecordable,
+    InvalidSelection,
 )
 
 
@@ -201,7 +202,12 @@ def _prepare(
     plugin = snapshot_plugin(worktree, directory.path / "plugin")
     # Recorded from the snapshot, at once, so that the record matches what the runs read.
     code = record_code(worktree, plugin)
-    selection = _select(_require_code_check(worktree, plugin), options)
+    selection = CaseSelection.make(
+        _require_code_check(worktree, plugin),
+        options.agents,
+        options.case_names,
+        options.runs_per_case,
+    )
     trust = confirm_trust(store, worktree, operator.now(), operator.open_terminal)
     if trust is None:
         raise StartRefused(f"The operator didn't confirm trust in {worktree} at its terminal")
@@ -257,26 +263,6 @@ def _require_code_check(worktree: Path, plugin: Path) -> Suite:
         findings = "\n".join(f"  {finding}" for finding in result.findings)
         raise StartRefused(f"The code check refused {len(result.findings)} item(s):\n{findings}")
     return result
-
-
-def _select(suite: Suite, options: InvocationOptions) -> CaseSelection:
-    agents = options.agents or suite.agents
-    unknown_agents = sorted(set(agents) - set(suite.agents))
-    if unknown_agents:
-        raise StartRefused(f"Agents must be among {list(suite.agents)} (got {unknown_agents})")
-    cases = tuple(case for case in suite.cases if case.agent in agents)
-    if options.case_name is not None:
-        cases = tuple(case for case in cases if case.name == options.case_name)
-        if not cases:
-            raise StartRefused(f"No case of the chosen agents is named {options.case_name!r}")
-    if not cases:
-        raise StartRefused("The chosen agents have no cases")
-    return CaseSelection(
-        cases=cases,
-        agents=tuple(agents),
-        case_name=options.case_name,
-        runs_per_case=options.runs_per_case,
-    )
 
 
 @dataclass(frozen=True)
