@@ -37,3 +37,7 @@ Install it from [my marketplace](https://github.com/gnarea/clone):
 ## Evals
 
 The agent eval suite in [`evals/`](evals/README.md) measures how reliably each agent behaves as its definition says.
+
+## Credits
+
+[`CREDITS.md`](CREDITS.md) says where the agents' and skills' instructions come from, and credits the work of others that they build on.

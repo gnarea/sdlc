@@ -54,5 +54,6 @@ Anything prescriptive (conventions, workflows, templates, checklists) belongs in
 - In skills, only `SKILL.md` MAY link to the skill's other files (e.g., reference files, templates), so that every relative path resolves from the skill's root. Any other file MAY refer to them by name instead (e.g., "the report template").
 - In templates, placeholders MUST be written in parentheses, whether they stand for a value or for a passage of text (e.g., `# (System) threat model`, `(What the model covers, and what it leaves out.)`).
 - Every instruction MUST come from how I work, rather than from received wisdom.
+- A change that bases an instruction on findings from someone else's work (e.g., a paper, a post) MUST credit the work in `CREDITS.md`, unless it's already credited there, or the instruction names it (e.g., a principle, a tool).
 - When changing an agent or skill, you MUST consider whether its counterpart (e.g., the `programming` skill for the `programmer` agent) needs a matching change.
 - You MUST observe the /ghost-writing:ghost-writing skill.

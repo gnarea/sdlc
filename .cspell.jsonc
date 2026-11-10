@@ -24,6 +24,23 @@
     }
   ],
   "ignoreRegExpList": ["Urls", "Email", "fenced-code-block", "code-span", "link-destination"],
+  "overrides": [
+    {
+      // Names of people, organisations, and works (e.g., titles that keep their American spellings), whether as link text or capitalised.
+      "filename": "CREDITS.md",
+      "patterns": [
+        {
+          "name": "link-text",
+          "pattern": "/\\[[^\\]]*\\]/g"
+        },
+        {
+          "name": "capitalised-word",
+          "pattern": "/\\b[A-Z][\\w'’-]*/g"
+        }
+      ],
+      "ignoreRegExpList": ["link-text", "capitalised-word"]
+    }
+  ],
   "words": [
     "AMQP",
     "backend",
