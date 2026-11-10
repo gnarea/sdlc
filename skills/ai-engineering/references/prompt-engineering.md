@@ -23,7 +23,6 @@ A _system prompt_ defines a task in general terms, so that it holds for every ca
 - Where an agent is meant to use its own judgement, its system prompt SHOULD read as a job description: what the role owns, its priorities in order, the principles by which it delivers on them, and the hazards that it must escalate, with anything prescriptive in a skill.
 - A system prompt SHOULD be brief, with whatever only some cases need loaded only when they need it (aka _progressive disclosure_), such as from a skill and its reference files.
 - Where the task is open-ended (e.g., research), the user prompt SHOULD spell out what to look for, whilst leaving room for findings that nobody anticipated.
-- Where nobody can answer an agent before its run ends, its prompts SHOULD give it a place in its result to ask for decisions, so that it can ask without stopping its work. That place SHOULD be apart from the agent's assumptions and the work's open items, since agents seldom ask when stopping is their only way to, and a question amongst assumptions or open items is easily missed. For example, the result's schema could have a field for each decision and the answer that the agent assumed in the meantime, or a delegator could ask for a section of the report on the decisions that the work needs.
 
 ## Project instructions
 
