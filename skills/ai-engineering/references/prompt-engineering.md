@@ -5,7 +5,7 @@
 - Instructions MUST NOT pull in opposite directions. Where two goals can conflict, the prompt MUST say which one wins (e.g., by listing priorities in order).
 - An instruction that only applies to some tasks MUST say which ones, so that the agent doesn't apply it to the rest.
 - Each instruction MUST be concrete enough to tell whether it was followed (e.g., "Use 2-space indentation", rather than "Format the code properly").
-- Each instruction MUST be checked for what it invites, as well as for what it says (e.g., asking for a document with enough detail to be "built without guesswork" invites implementation detail).
+- Each instruction MUST be checked for what it invites, as well as for what it says (e.g., asking for a document with enough detail to be "built without guesswork" invites implementation detail, and describing the assumptions in a result's schema as "the choices that you made for the maintainers" invites the agent to make a decision that needs their confirmation, and to record it as an assumption).
 - An instruction SHOULD give its reason where the agent needs it to apply the instruction to cases that the prompt doesn't foresee.
 - An instruction that compensates for a weakness of a model SHOULD name the model and the weakness (e.g., "since Sonnet 5.5 often skips a skill that it's only told to use"), so that it can be removed once no model that runs the prompt has the weakness.
 - A change that fixes a defect or adds a behaviour SHOULD consider simplifying or restructuring the prompt (e.g., rewording, merging, or removing instructions), as well as, or instead of, adding to it.
