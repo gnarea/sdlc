@@ -11,23 +11,23 @@
 - Text that a harness adds to a session (e.g., a message from code that runs after a tool call, a notice between steps) SHOULD be written as facts, and SHOULD follow the last tool result as text of its own, since Claude may otherwise take it for a prompt injection.
 - Where the harness calls the model itself, the system prompt and the tool list MUST stay identical, byte for byte, throughout a session, and the history MUST only be appended to, since an edit invalidates the cache and the model's earlier thinking, and the API may refuse it. Changes SHOULD go in as messages, and the history SHOULD be compacted by the API, or the session restarted from what's been written down.
 
-## Fable 5.1
+## Fable 5.2
 
-Fable 5.1 SHOULD only run exceptional work that justifies the greatest capability available (e.g., research across many sources that ends in a finished document), and only where evals show Opus 5.5 falling short at its highest effort levels.
+Fable 5.2 SHOULD only run exceptional work that justifies the greatest capability available (e.g., research across many sources that ends in a finished document), and even then, only where evals show Opus 5.5 falling short at its highest effort levels, or Fable 5.2 doing as well for less at a lower one.
 
-Its effort SHOULD start at `high`, its default, rising to `xhigh` or `max` for the most demanding work, and falling to `medium` or `low` for routine work where evals show that quality holds.
+Its effort SHOULD start at `medium`, rising to `high` for harder or longer work (e.g., a long unattended run), and falling to `low` where evals show that quality holds. It SHOULD only go to `xhigh` for the hardest long-running work where evals show a gain, and to `max` to measure its ceiling, or for the rare task where time and tokens don't matter.
 
-- Data that mustn't be retained MUST NOT be sent to Fable 5.1, since it isn't offered with zero data retention.
-- A prompt for Fable 5.1 SHOULD describe the outcome, rather than the steps, since prompts and skills written for earlier models are often too prescriptive for it, and lower the quality of its work.
-- A prompt for an unattended run SHOULD tell Fable 5.1 that nobody is watching, since it otherwise stops to ask for permission that it already has.
-- A harness SHOULD NOT show Fable 5.1 how many tokens it has left.
-- Instructions on Fable 5.1's writing style SHOULD go in a user message, rather than in the system prompt, and a nudge that it must act on in every turn SHOULD go at the end of each request, since it gives more weight to both there.
+- Data that mustn't be retained MUST NOT be sent to Fable 5.2, unless Anthropic has expressly authorised the organisation to use it with zero data retention, since Fable 5.2 otherwise requires data to be retained.
+- Where Fable 5.2 ends a turn before the work is done, as it's more likely to do at `low` and `medium` effort, its prompt SHOULD tell it to carry on with any work that doesn't depend on someone's answer, working through ordinary obstacles (e.g., an error, a timeout), and reporting deliberate ones (e.g., access that was withheld) without working around them.
+- An approval rule in a prompt for Fable 5.2 SHOULD name the exact actions that it covers, with any exception written into the rule itself, since Fable 5.2 applies such rules as written. Where it still holds back routine work, the prompt SHOULD also name the steps that need no approval (e.g., retrying a call that's safe to repeat).
+- A harness SHOULD NOT tell Fable 5.2 in its prompt how many tokens it may use or has left, since how much it spends depends on the budget's size.
+- Rules on Fable 5.2's writing style SHOULD NOT set hard limits (e.g., "one instruction per sentence, in 20 words or fewer"), since it follows them so closely that they can make its prose choppy.
 
 ## Opus 5.5
 
 Opus 5.5 SHOULD run complex work that calls for autonomy and judgement (e.g., long-running agentic coding, designing a system, reviewing a change, drawing up a plan), where what's wanted is clearer than how to get there, including any work that ingests a large corpus, or that divides work between other agents (e.g., research).
 
-Its effort SHOULD start at `medium`, its default, rising to `high` or above for harder or longer work, and falling to `low` for routine work where evals show that quality holds.
+Its effort SHOULD start at `medium`, rising to `high` or above for harder or longer work, and falling to `low` for routine work where evals show that quality holds.
 
 Untrusted content SHOULD reach Opus 5.5 through a tool result, rather than in a user message (e.g., pasted into a brief), since it treats whatever is in a user message as coming from the user.
 
@@ -44,7 +44,7 @@ For agentic work, its effort SHOULD start at `medium` where the task is well spe
 
 Haiku 5.5 SHOULD only run narrow, well-defined work (e.g., searching, summarising, extracting, classifying, routing) that doesn't need it to gather much context, or to gather it in complicated ways.
 
-Its effort SHOULD start at `medium`, its default, falling to `low` for short, simple, high-volume requests, and rising to `high` for longer work or strict instruction following. It SHOULD NOT run at `low` effort with a long system prompt, since it then tends to stop early and hand the task back, and it SHOULD only go to `xhigh` or `max` where evals show a gain over Sonnet 5.5.
+Its effort SHOULD start at `medium`, falling to `low` for short, simple, high-volume requests, and rising to `high` for longer work or strict instruction following. It SHOULD NOT run at `low` effort with a long system prompt, since it then tends to stop early and hand the task back, and it SHOULD only go to `xhigh` or `max` where evals show a gain over Sonnet 5.5.
 
 ## Claude Code
 
