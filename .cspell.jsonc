@@ -21,6 +21,10 @@
     {
       "name": "link-destination",
       "pattern": "/(?<=\\]\\()[^)\\s]+/g"
+    },
+    {
+      "name": "capitalised-word",
+      "pattern": "/\\b[A-Z][\\w'’-]*/g"
     }
   ],
   "ignoreRegExpList": ["Urls", "Email", "fenced-code-block", "code-span", "link-destination"],
@@ -32,19 +36,22 @@
         {
           "name": "link-text",
           "pattern": "/\\[[^\\]]*\\]/g"
-        },
-        {
-          "name": "capitalised-word",
-          "pattern": "/\\b[A-Z][\\w'’-]*/g"
         }
       ],
       "ignoreRegExpList": ["link-text", "capitalised-word"]
+    },
+    {
+      // Names of algorithms, schemes, protocols, and tools, whether capitalised (e.g., acronyms) or not.
+      "filename": "skills/systems-architecture/assets/cryptographic-right-answers.md",
+      "ignoreRegExpList": ["capitalised-word"],
+      "words": ["bcrypt", "haveged", "libssl", "restic", "rustls", "scrypt"]
     }
   ],
   "words": [
     "AMQP",
     "backend",
     "backoff",
+    "CNSA",
     "cyclomatic",
     "Datadog",
     "delegator",
