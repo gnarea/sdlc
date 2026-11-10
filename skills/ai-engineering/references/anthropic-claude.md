@@ -13,14 +13,14 @@
 
 ## Fable 5.2
 
-Fable 5.2 SHOULD only run exceptional work that justifies the greatest capability available (e.g., research across many sources that ends in a finished document), and only where evals show Opus 5.5 falling short at its highest effort levels, or Fable 5.2 doing as well for less at a lower level.
+Fable 5.2 SHOULD only run exceptional work that justifies the greatest capability available (e.g., research across many sources that ends in a finished document), and even then, only where evals show Opus 5.5 falling short at its highest effort levels, or Fable 5.2 doing as well for less at a lower one.
 
-Its effort SHOULD start at `high`, its default on the API, rising to `xhigh` for the hardest long-running work where evals show a gain, and falling to `medium` or `low` where evals show that quality holds. It SHOULD only run at `max` to measure its ceiling, or for the rare task where time and tokens don't matter.
+Its effort SHOULD start at `high`, its default on the API (Claude Code starts it at `medium`), rising to `xhigh` for the hardest long-running work where evals show a gain, and falling to `medium` or `low` where evals show that quality holds. It SHOULD only run at `max` to measure its ceiling, or for the rare task where time and tokens don't matter.
 
-- Data that mustn't be retained MUST NOT be sent to Fable 5.2, unless Anthropic has expressly authorised zero data retention for the account, since Fable 5.2 otherwise requires data to be retained for 30 days.
-- Where Fable 5.2 ends a turn before the work is done, as it's more likely to do at `low` and `medium` effort, its prompt SHOULD tell it to carry on with any work that doesn't depend on someone's answer, working through ordinary obstacles (e.g., an error, a timeout), and leaving deliberate ones alone (e.g., access that was withheld).
-- An approval rule in a prompt for Fable 5.2 SHOULD name the exact actions that it covers, with any exception written into the rule itself, and the prompt SHOULD name the routine steps that need no approval (e.g., retrying a call that's safe to repeat), since Fable 5.2 applies such rules as written, and holds back routine work otherwise.
-- A harness SHOULD NOT tell Fable 5.2 in its prompt how many tokens it may use or has left, since how much it spends depends on the budget's size, and it does as well without a large one.
+- Data that mustn't be retained MUST NOT be sent to Fable 5.2, unless Anthropic has expressly authorised zero data retention for the organisation, since Fable 5.2 otherwise requires data to be retained for 30 days.
+- Where Fable 5.2 ends a turn before the work is done, as it's more likely to do at `low` and `medium` effort, its prompt SHOULD tell it to carry on with any work that doesn't depend on someone's answer, working through ordinary obstacles (e.g., an error, a timeout), and reporting deliberate ones (e.g., access that was withheld) without working around them.
+- An approval rule in a prompt for Fable 5.2 SHOULD name the exact actions that it covers, with any exception written into the rule itself, since Fable 5.2 applies such rules as written. Where it still holds back routine work, the prompt SHOULD also name the steps that need no approval (e.g., retrying a call that's safe to repeat).
+- A harness SHOULD NOT tell Fable 5.2 in its prompt how many tokens it may use or has left, since how much it spends depends on the budget's size.
 - Rules on Fable 5.2's writing style SHOULD NOT set hard limits (e.g., "one instruction per sentence, in 20 words or fewer"), since it follows them closely enough to make its prose choppy.
 
 ## Opus 5.5
