@@ -1,6 +1,6 @@
 # Cryptography recommendations
 
-Each section covers a common cryptographic need. It lists the options in order of preference, along with any condition on each, and then those to avoid. The recommendations are as of October 2026, and come from Filippo Valsorda's _(Post-Quantum) Cryptographic Right Answers_.
+The recommendations come from Filippo Valsorda's _(Post-Quantum) Cryptographic Right Answers_ (2026). Each section lists the options for a common cryptographic need in order of preference, along with any condition on each, and then those to avoid.
 
 Symmetric cryptography is safe from quantum computers, but every asymmetric option is post-quantum: the transition to post-quantum cryptography has to be complete by 2029, and whatever an adversary records today can be decrypted once a quantum computer breaks the key exchange that protected it.
 
@@ -43,7 +43,7 @@ Avoid:
 
 ## Hashing
 
-1. SHA-512/256, where every platform has it, since it resists length extension.
+1. SHA-512/256 (a variant of SHA-512 with a 256-bit output), where every platform has it, since it resists length extension.
 2. SHA-256 or SHA-512.
 3. SHA-3, though it's slower and offers nothing that SHA-2 lacks, or 32 bytes of SHAKE128 output where the system already uses SHA-3 (e.g., for ML-KEM or ML-DSA).
 4. BLAKE3, where there's a reason to use it and a reason to trust its implementation.
@@ -65,7 +65,7 @@ Avoid:
 
 ## Random identifiers
 
-1. 256 random bits (32 bytes), from the operating system's random source (`getrandom` on Linux, `ProcessPrng` on Windows, `arc4random_buf` on macOS and BSD, `getRandomValues` on the Web), through a library that wraps it.
+1. 256 random bits (32 bytes), from the operating system's random source, through a library that wraps it.
 2. A UUIDv4, or another value with about 128 random bits, where the system will never need more than 2^48 (about 280 trillion) of them.
 
 Avoid:
@@ -143,12 +143,12 @@ Avoid:
 
 ## Transport security
 
-1. The cloud provider's load balancer, where the system runs in a cloud, with a post-quantum security policy where it needs one.
+1. The cloud provider's load balancer, where the system runs in a cloud.
 2. rustls or Go's `crypto/tls`, which are memory-safe.
-3. BoringSSL or AWS-LC, where it has to be C. AWS-LC has versioned releases.
+3. BoringSSL or AWS-LC, where it has to be C.
 4. s2n-tls or rustls-ffi, where nothing needs compatibility with OpenSSL's libssl.
 
-Whichever it is, it should use TLS 1.3, with `X25519MLKEM768` first in its order of preference. On RHEL 9 and its derivatives, this has to be turned on.
+Whichever it is, it should use TLS 1.3, with `X25519MLKEM768` first in its order of preference.
 
 Avoid:
 
