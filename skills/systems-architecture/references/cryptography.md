@@ -3,13 +3,13 @@
 ## Algorithms
 
 - Each algorithm MUST be expected to stay secure for as long as the data it protects needs protecting (e.g., the period over which verifiers must accept a signature, or over which a ciphertext must stay confidential).
-- Each algorithm, scheme, protocol, and library SHOULD be one of the options that the cryptography recommendations list for its need. It MUST NOT be one that they say to avoid, unless a compliance regime that the system must meet (e.g., CNSA 2.0), or a third party that it must interoperate with, requires it.
+- Each algorithm, scheme, protocol, and library SHOULD be one of the options that the approved cryptography lists for its need. It MUST NOT be one that the approved cryptography says to avoid, unless a compliance regime that the system must meet (e.g., CNSA 2.0), or a third party that it must interoperate with, requires it.
 - Where a digest only has to detect accidental corruption (e.g., of a file on disk), it SHOULD be a checksum (e.g., CRC32C), which is cheaper to compute and store than a cryptographic hash.
 
 ## Keys
 
 - Every key MUST have exactly one declared purpose, and MUST NOT be used for another.
-- Every key that has to stay secret, whether symmetric or private, MUST be generated inside the store that holds it (e.g., a key management service, the platform's keystore), backed by hardware where the store offers it, and MUST NOT leave it: whatever needs the key MUST ask the store to use it (e.g., to sign, decrypt, or compute a MAC). Algorithms MUST therefore be chosen from those that the store supports, and a store that supports none of those that the cryptography recommendations allow for the job SHOULD NOT be used.
+- Every key that has to stay secret, whether symmetric or private, MUST be generated inside the store that holds it (e.g., a key management service, the platform's keystore), backed by hardware where the store offers it, and MUST NOT leave it: whatever needs the key MUST ask the store to use it (e.g., to sign, decrypt, or compute a MAC). Algorithms MUST therefore be chosen from those that the store supports, and a store that supports none of those that the approved cryptography allows for the job SHOULD NOT be used.
 - The only keys that MAY be held outside the store are those for a job that the store can't do (e.g., an ephemeral key in a key agreement, a database passphrase that a library needs). Wherever such a key is stored, it MUST be encrypted with a key that the store holds (aka _envelope encryption_). Where the key is outside the store only because the store lacks its algorithm, the design MUST instead assess whether envelope encryption has any merit.
 - The shared secret from a key agreement MUST NOT be used as a key: each key MUST be derived from it with a KDF (e.g., HKDF, the exporter of TLS or HPKE).
 - Keys, nonces, and identifiers MUST be drawn from the platform's cryptographic random source.
