@@ -12,8 +12,6 @@ The `programmer` agent and the `programming` skill build on [what I strive for a
 
 The `architect` agent and the `systems-architecture` skill build on [what I strive for as a systems architect](https://github.com/gnarea/sdlc/issues/14#issuecomment-6507178257), from my work at Relaycorp.
 
-The skill's cryptographic right answers come from Filippo Valsorda's [(Post-Quantum) Cryptographic Right Answers](https://words.filippo.io/right-answers/) (2026).
-
 ## Protocol design
 
 The `protocol-design` skill builds on [what I strive for as a protocol designer](https://github.com/gnarea/sdlc/issues/14#issuecomment-6507178503), from my work at Relaycorp.
