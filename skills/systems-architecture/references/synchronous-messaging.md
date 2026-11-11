@@ -17,4 +17,4 @@ Request-response MUST be limited to operations that complete within seconds. Any
 ## The server
 
 - An operation that changes state (e.g., a `POST` in HTTP) MUST be idempotent, because the client may retry it.
-- Where a client must authenticate, the request MUST carry a short-lived credential bound to the server (e.g., a JWT whose audience is the server URL), and the server MUST NOT keep a session.
+- Where a client must authenticate, each request MUST carry a short-lived credential that's bound to the server (e.g., a session token that the server issued, an identity provider's token whose audience is the server's URL).
