@@ -9,8 +9,8 @@
 ## Keys
 
 - Every key MUST have exactly one declared purpose, and MUST NOT be used for another.
-- Every key that has to stay secret, whether symmetric or private, MUST be generated inside the store that holds it (e.g., a key management service, the platform's keystore), backed by hardware where the store offers it, and MUST NOT leave it: whatever needs the key MUST ask the store to use it (e.g., to sign, decrypt, or compute a MAC). Algorithms MUST therefore be chosen from those that the store supports, unless the cryptography recommendations say to avoid every one that would do the job.
-- The only keys that MAY be held outside the store are those for a job that the store can't do (e.g., an ephemeral key in a key agreement, a database passphrase that a library needs, a key for an algorithm that the store lacks). Wherever such a key is stored, it MUST be encrypted with a key that the store holds (aka _envelope encryption_).
+- Every key that has to stay secret, whether symmetric or private, MUST be generated inside the store that holds it (e.g., a key management service, the platform's keystore), backed by hardware where the store offers it, and MUST NOT leave it: whatever needs the key MUST ask the store to use it (e.g., to sign, decrypt, or compute a MAC). Algorithms MUST therefore be chosen from those that the store supports, and a store that supports none of those that the cryptography recommendations allow for the job SHOULD NOT be used.
+- The only keys that MAY be held outside the store are those for a job that the store can't do (e.g., an ephemeral key in a key agreement, a database passphrase that a library needs). Wherever such a key is stored, it MUST be encrypted with a key that the store holds (aka _envelope encryption_). Where the key is outside the store only because the store lacks its algorithm, the design MUST instead assess whether envelope encryption has any merit.
 - The shared secret from a key agreement MUST NOT be used as a key: each key MUST be derived from it with a KDF (e.g., HKDF, the exporter of TLS or HPKE).
 - Keys, nonces, and identifiers MUST be drawn from the platform's cryptographic random source.
 
