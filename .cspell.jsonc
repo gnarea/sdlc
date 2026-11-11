@@ -42,12 +42,13 @@
     },
     {
       // Names of algorithms, schemes, protocols, and tools, whether capitalised (e.g., acronyms) or not.
-      "filename": "skills/systems-architecture/assets/cryptography-recommendations.md",
+      "filename": "skills/systems-architecture/assets/approved-cryptography.md",
       "ignoreRegExpList": ["capitalised-word"],
       "words": ["bcrypt", "haveged", "libssl", "restic", "rustls", "scrypt"]
     }
   ],
   "words": [
+    "AEAD",
     "AMQP",
     "backend",
     "backoff",
@@ -61,6 +62,8 @@
     "frontmatter",
     "Grep",
     "greps",
+    "HKDF",
+    "HPKE",
     "Jinja",
     "Jira",
     "keystore",

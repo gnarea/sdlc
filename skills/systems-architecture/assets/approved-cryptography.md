@@ -1,6 +1,6 @@
-# Cryptography recommendations
+# Approved cryptography
 
-The recommendations come from Filippo Valsorda's _(Post-Quantum) Cryptographic Right Answers_ (2026). Each section lists the options for a common cryptographic need in order of preference, along with any condition on each, and then those to avoid.
+The approved options come from Filippo Valsorda's _(Post-Quantum) Cryptographic Right Answers_ (2026). Each section lists the options approved for a common cryptographic need in order of preference, along with any condition on each, and then those to avoid.
 
 Symmetric cryptography is safe from quantum computers, but every asymmetric option is post-quantum: the transition to post-quantum cryptography has to be complete by 2029, and whatever an adversary records today can be decrypted once a quantum computer breaks the key exchange that protected it.
 
