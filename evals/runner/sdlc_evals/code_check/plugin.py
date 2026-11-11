@@ -22,7 +22,6 @@ PERMITTED_ROOT_ENTRIES = frozenset(
         ".markdownlint-cli2.jsonc",
         ".venv",
         "CLAUDE.md",
-        "CREDITS.md",
         "LICENSE",
         "README.md",
         "agents",
