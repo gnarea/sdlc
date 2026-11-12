@@ -18,6 +18,7 @@
     "@anthropic-ai/claude-code": "2.1.317",
     "@cspell/dict-en-common-misspellings": "2.2.5",
     "@cspell/dict-en-gb-ise": "1.0.38",
+    "@semantic-release/exec": "7.1.0",
     "conventional-changelog-conventionalcommits": "9.3.1",
     "cspell": "10.4.0",
     "markdownlint-cli2": "0.24.0",

@@ -3,11 +3,9 @@ name: Release
 on:
   pull_request:
     branches: [main]
-    # `edited` covers a change to the title or the description, which the squash commit takes.
     types: [opened, reopened, synchronize, edited]
   push:
     branches: [main]
-  # For the head that the version bump pushes, since pushes with the workflow's token start no workflows.
   workflow_dispatch:
 
 permissions: {}
@@ -35,7 +33,7 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.2
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -45,65 +43,48 @@ jobs:
       - name: Require the pull request's title to follow Conventional Commits
         run: |
           title="$(gh pr view "$PULL_REQUEST" --json title --jq .title)"
-          types="build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test"
-          pattern="^($types)(\([a-z0-9-]+\))?!?: [^ ]"
+          pattern='^[a-z]+(\([a-z0-9-]+\))?!?: [^ ]'
           if [[ ! "$title" =~ $pattern ]]; then
-            echo "::error::Pull request's title must follow Conventional Commits, with one of the types ${types//|/, } (got \"$title\")"
+            echo "::error::Pull request's title must follow Conventional Commits (got \"$title\")"
             exit 1
           fi
 
-      - name: Preview the release that squashing the pull request would make
-        id: dry-run
+      - name: Set the plugin's version to that of the release that squashing the pull request would make
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          main_version="$(git show origin/main:.claude-plugin/plugin.json | jq --raw-output .version)"
           # Treat main's version as released, in case its release is still running.
-          git tag "v$main_version" origin/main 2>/dev/null || true
-          git switch --quiet --force-create main origin/main
-          gh pr view "$PULL_REQUEST" --json number,title,body --jq '"\(.title) (#\(.number))\n\n\(.body)"' |
-            git commit --quiet --allow-empty --file -
-          # semantic-release checks that it can push to the repository, so git has to resolve its URL to this local
-          # copy, which has the squash commit. Without GitHub Actions' variables, it takes the branch from git.
-          GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="url.$PWD.insteadOf" GIT_CONFIG_VALUE_0="$REPOSITORY_URL" \
-            env -u GITHUB_ACTIONS npm exec --no -- semantic-release --dry-run --repository-url "$REPOSITORY_URL" \
-            --plugins @semantic-release/commit-analyzer,@semantic-release/release-notes-generator |
-            tee "$RUNNER_TEMP/dry-run.log"
-          next_version="$(sed -n 's/.*The next release version is \([0-9.]*\).*/\1/p' "$RUNNER_TEMP/dry-run.log")"
-          echo "next-version=$next_version" >> "$GITHUB_OUTPUT"
-          echo "main-version=$main_version" >> "$GITHUB_OUTPUT"
+          git tag "v$(git show origin/main:.claude-plugin/plugin.json | jq --raw-output .version)" origin/main 2>/dev/null || true
+          message="$(gh pr view "$PULL_REQUEST" --json number,title,body --jq '"\(.title) (#\(.number))\n\n\(.body)"')"
+          git switch --quiet --force-create main "$(git commit-tree "$HEAD_SHA^{tree}" -p origin/main -m "$message")"
+          # Without GitHub Actions' variables, semantic-release takes the branch from git, rather than the pull request's.
+          env -u GITHUB_ACTIONS npm exec --no -- semantic-release --dry-run
         env:
-          REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+          GITHUB_TOKEN: ${{ github.token }}
 
-      - name: Require a release for changes to agents or skills
+      - name: Require a new version for changes to agents or skills
         # Existing users only get a change to what Claude Code loads when the version changes.
-        if: steps.dry-run.outputs.next-version == ''
         run: |
-          if ! git diff --quiet "origin/main...$HEAD_SHA" -- agents skills; then
+          base="$(git merge-base origin/main "$HEAD_SHA")"
+          if git diff --quiet "$base" -- .claude-plugin/plugin.json && ! git diff --quiet "$base" "$HEAD_SHA" -- agents skills; then
             echo "::error::Pull request changes agents or skills, so its type must release a version, such as feat or fix"
             exit 1
           fi
 
-      - name: Set the plugin's version on the pull request's branch
+      - name: Push the plugin's version
         run: |
-          # A conflict with main has to be resolved before the version can be set.
-          tree="$(git merge-tree --write-tree origin/main "$HEAD_SHA")" || exit 0
-          merged_version="$(git show "$tree:.claude-plugin/plugin.json" | jq --raw-output .version)"
-          if [[ "$merged_version" == "$VERSION" ]]; then
+          if git diff --quiet; then
             exit 0
           fi
           git switch --quiet --detach "$HEAD_SHA"
-          jq --arg version "$VERSION" '.version = $version' .claude-plugin/plugin.json > "$RUNNER_TEMP/plugin.json"
-          mv "$RUNNER_TEMP/plugin.json" .claude-plugin/plugin.json
-          git commit --quiet --message "chore: Set the plugin's version to $VERSION" .claude-plugin/plugin.json
+          git commit --quiet --message "chore: Set the plugin's version to $(jq --raw-output .version .claude-plugin/plugin.json)" .claude-plugin/plugin.json
           if ! git push --quiet origin "HEAD:refs/heads/$BRANCH"; then
-            echo "::error file=.claude-plugin/plugin.json::Plugin's version must be $VERSION"
+            echo "::error file=.claude-plugin/plugin.json::Plugin's version must be $(jq --raw-output .version .claude-plugin/plugin.json)"
             exit 1
           fi
+          # The push starts no workflows, since it uses the workflow's token.
           gh workflow run ci.yml --ref "$BRANCH"
           gh workflow run release.yml --ref "$BRANCH"
-        env:
-          VERSION: ${{ steps.dry-run.outputs.next-version || steps.dry-run.outputs.main-version }}
 
   release:
     if: github.event_name == 'push'
@@ -121,7 +102,7 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.2
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
