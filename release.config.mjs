@@ -1,11 +1,9 @@
 const CONVENTIONAL_COMMITS_PRESET = "conventionalcommits";
 
-// The pull request check only accepts these types, which CLAUDE.md defines for the plugin.
-export const COMMIT_TYPES = ["feat", "fix", "docs", "refactor", "test", "ci", "chore", "revert"];
+// The only types that the pull request check accepts.
+export const COMMIT_TYPES = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "revert", "style", "test"];
 
-export const RELEASE_NAME_TEMPLATE = "sdlc-<%= nextRelease.version %>";
-
-export const RELEASE_BODY_TEMPLATE = `<%= nextRelease.notes %>
+const RELEASE_BODY_TEMPLATE = `<%= nextRelease.notes %>
 ## Installing
 
 \`\`\`text
@@ -30,7 +28,6 @@ export default {
     [
       "@semantic-release/github",
       {
-        releaseNameTemplate: RELEASE_NAME_TEMPLATE,
         releaseBodyTemplate: RELEASE_BODY_TEMPLATE,
         // The release job can't write to issues or pull requests.
         successCommentCondition: false,

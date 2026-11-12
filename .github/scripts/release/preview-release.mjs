@@ -17,8 +17,4 @@ const preview = await previewPullRequest({
 });
 
 await appendFile(readEnvironmentVariable("GITHUB_STEP_SUMMARY"), formatSummary(preview), "utf8");
-await appendFile(
-  readEnvironmentVariable("GITHUB_OUTPUT"),
-  `plugin-version=${preview.pluginVersion}\nexpected-plugin-version=${preview.expectedPluginVersion}\n`,
-  "utf8",
-);
+await appendFile(readEnvironmentVariable("GITHUB_OUTPUT"), `version-to-bump=${preview.versionToBump ?? ""}\n`, "utf8");

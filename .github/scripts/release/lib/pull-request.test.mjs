@@ -13,6 +13,9 @@ describe("requireConventionalTitle", () => {
     "ci: Release automatically",
     "chore: Bump cspell from 10.4.0 to 10.5.0",
     "revert: Add a skill",
+    "build: Pin Node.js",
+    "perf: Speed up the evals",
+    "style: Format the scripts",
     "feat(programmer): Add a principle",
     "feat(systems-architecture): Add a principle",
     "feat!: Rename a skill",
@@ -28,7 +31,6 @@ describe("requireConventionalTitle", () => {
   const invalidTitles = [
     "Add a skill",
     "feature: Add a skill",
-    "perf: Speed up the evals",
     "Feat: Add a skill",
     "feat:Add a skill",
     "feat: ",
@@ -42,7 +44,7 @@ describe("requireConventionalTitle", () => {
   for (const title of invalidTitles) {
     test(`refuses ${JSON.stringify(title)}`, () => {
       assert.throws(() => requireConventionalTitle(title), {
-        message: `Pull request's title must be "(type)[(scope)][!]: (description)", with a type among feat, fix, docs, refactor, test, ci, chore, revert (got ${JSON.stringify(title)})`,
+        message: `Pull request's title must be "(type)[(scope)][!]: (description)", with a type among build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test (got ${JSON.stringify(title)})`,
       });
     });
   }

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { makeGitHubClient, waitForRelease } from "./github.mjs";
+import { makeGitHubClient } from "./github.mjs";
 
 const HEAD_SHA = "0123456789abcdef0123456789abcdef01234567";
 
@@ -110,107 +110,4 @@ describe("readPullRequest", () => {
       await assert.rejects(github.readPullRequest(7), { message });
     });
   }
-});
-
-describe("hasRelease", () => {
-  test("says a release exists when GitHub returns it", async () => {
-    const { github } = makeClient({ "/repos/gnarea/sdlc/releases/tags/v1.11.0": { status: 200, body: "{}" } });
-
-    assert.equal(await github.hasRelease("v1.11.0"), true);
-  });
-
-  test("says a release doesn't exist when GitHub can't find it", async () => {
-    const { github } = makeClient({});
-
-    assert.equal(await github.hasRelease("v1.11.0"), false);
-  });
-
-  test("refuses any other response", async () => {
-    const { github } = makeClient({ "/repos/gnarea/sdlc/releases/tags/v1.11.0": { status: 502, body: "" } });
-
-    await assert.rejects(github.hasRelease("v1.11.0"), {
-      message: "GitHub must say whether release v1.11.0 exists (got HTTP 502)",
-    });
-  });
-});
-
-describe("waitForRelease", () => {
-  /** Fake of GitHub that publishes the release after a number of checks, or fails the checks given. */
-  function makeFakeGitHub({ checksBeforeRelease = Infinity, failingChecks = [] } = {}) {
-    const checkedTags = [];
-    return {
-      checkedTags,
-      async hasRelease(tag) {
-        checkedTags.push(tag);
-        if (failingChecks.includes(checkedTags.length)) {
-          throw new Error("GitHub is down");
-        }
-        return checksBeforeRelease < checkedTags.length;
-      },
-    };
-  }
-
-  /** Fake clock whose sleeps advance its time, and are recorded. */
-  function makeFakeClock() {
-    let time = 0;
-    const sleeps = [];
-    return {
-      sleeps,
-      now: () => time,
-      async sleep(milliseconds) {
-        sleeps.push(milliseconds);
-        time += milliseconds;
-      },
-    };
-  }
-
-  test("returns straight away when the release exists", async () => {
-    const github = makeFakeGitHub({ checksBeforeRelease: 0 });
-    const clock = makeFakeClock();
-
-    await waitForRelease(github, "v1.11.0", clock);
-
-    assert.deepEqual(github.checkedTags, ["v1.11.0"]);
-    assert.deepEqual(clock.sleeps, []);
-  });
-
-  test("polls with exponential backoff until the release exists", async () => {
-    const github = makeFakeGitHub({ checksBeforeRelease: 4 });
-    const clock = makeFakeClock();
-
-    await waitForRelease(github, "v1.11.0", clock);
-
-    assert.equal(github.checkedTags.length, 5);
-    assert.deepEqual(clock.sleeps, [5_000, 10_000, 20_000, 40_000]);
-  });
-
-  test("retries a failed check", async () => {
-    const github = makeFakeGitHub({ checksBeforeRelease: 1, failingChecks: [1] });
-    const clock = makeFakeClock();
-
-    await waitForRelease(github, "v1.11.0", clock);
-
-    assert.equal(github.checkedTags.length, 2);
-  });
-
-  test("gives up before the deadline of 5 minutes", async () => {
-    const github = makeFakeGitHub();
-    const clock = makeFakeClock();
-
-    await assert.rejects(waitForRelease(github, "v1.11.0", clock), {
-      message: "Release v1.11.0 must exist within 5 minutes: re-run the release on main, or publish it by hand",
-    });
-    assert.deepEqual(clock.sleeps, [5_000, 10_000, 20_000, 40_000, 60_000, 60_000, 60_000]);
-    assert.ok(clock.now() <= 5 * 60_000);
-  });
-
-  test("chains the last error when it gives up", async () => {
-    const github = makeFakeGitHub({ failingChecks: [8] });
-    const clock = makeFakeClock();
-
-    await assert.rejects(waitForRelease(github, "v1.11.0", clock), (error) => {
-      assert.equal(error.cause.message, "GitHub is down");
-      return true;
-    });
-  });
 });

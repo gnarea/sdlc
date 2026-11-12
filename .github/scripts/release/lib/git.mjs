@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
-import { compareVersions, isVersion } from "./version.mjs";
+import { isVersion } from "./version.mjs";
 
 export const RELEASE_TAG_PREFIX = "v";
 
@@ -32,36 +32,71 @@ export async function runGit(repositoryPath, gitArguments, { input } = {}) {
 
 /** Read the version of the highest release tag reachable from a revision, as semantic-release finds it. */
 export async function readLastReleaseVersion(repositoryPath, revision) {
-  const tags = await runGit(repositoryPath, ["tag", "--merged", revision, "--list", `${RELEASE_TAG_PREFIX}*`]);
-  const versions = tags
+  const tags = await runGit(repositoryPath, [
+    "tag",
+    "--merged",
+    revision,
+    "--list",
+    `${RELEASE_TAG_PREFIX}*`,
+    "--sort=-version:refname",
+  ]);
+  const version = tags
     .split("\n")
     .map((tag) => tag.slice(RELEASE_TAG_PREFIX.length))
-    .filter(isVersion);
-  if (versions.length === 0) {
+    .find(isVersion);
+  if (version === undefined) {
     throw new Error(`Revision must have a release tag (got none on ${revision})`);
   }
-  return versions.sort(compareVersions).at(-1);
+  return version;
+}
+
+export async function hasRef(repositoryPath, ref) {
+  try {
+    await runGit(repositoryPath, ["rev-parse", "--verify", "--quiet", ref]);
+    return true;
+  } catch (error) {
+    if (error.code === 1) {
+      return false;
+    }
+    throw error;
+  }
 }
 
 /**
- * Make the commit that squashing the head onto the base would produce, without touching the working tree.
+ * Make a commit on the base with the message that squashing a pull request would give it.
  *
- * Throws if the head conflicts with the base, since GitHub can't squash it either.
+ * It keeps the base's tree, since semantic-release only reads the messages.
  */
-export async function makeSquashCommit(repositoryPath, { baseRevision, headRevision, message }) {
-  let tree;
-  try {
-    tree = await runGit(repositoryPath, ["merge-tree", "--write-tree", "--no-messages", baseRevision, headRevision]);
-  } catch (error) {
-    throw new Error(`Head must merge into the base without conflicts (got conflicts with ${baseRevision})`, {
-      cause: error,
-    });
-  }
-  return runGit(repositoryPath, ["commit-tree", tree, "-p", baseRevision, "-F", "-"], { input: message });
+export async function makeSquashCommit(repositoryPath, { baseRevision, message }) {
+  return runGit(repositoryPath, ["commit-tree", `${baseRevision}^{tree}`, "-p", baseRevision, "-F", "-"], {
+    input: message,
+  });
 }
 
-export async function listChangedPaths(repositoryPath, fromRevision, toRevision) {
-  const paths = await runGit(repositoryPath, ["diff", "--name-only", "--no-renames", fromRevision, toRevision]);
+/**
+ * Merge the head into the base without touching the working tree, returning the merged tree and any conflicted paths.
+ *
+ * The tree has conflict markers in the conflicted paths.
+ */
+export async function mergeTrees(repositoryPath, baseRevision, headRevision) {
+  const mergeArguments = ["merge-tree", "--write-tree", "--name-only", "--no-messages", baseRevision, headRevision];
+  let output;
+  try {
+    output = await runGit(repositoryPath, mergeArguments);
+  } catch (error) {
+    // Git also exits with 1 when it can't merge at all (e.g., a revision is missing), but then it writes no tree.
+    if (error.code !== 1 || error.stdout.trim() === "") {
+      throw error;
+    }
+    output = error.stdout.trim();
+  }
+  const [tree, ...conflictedPaths] = output.split("\n");
+  return { tree, conflictedPaths };
+}
+
+/** List the paths that the head changed since it diverged from the base. */
+export async function listChangedPaths(repositoryPath, baseRevision, headRevision) {
+  const paths = await runGit(repositoryPath, ["diff", "--name-only", "--no-renames", `${baseRevision}...${headRevision}`]);
   return paths === "" ? [] : paths.split("\n");
 }
 

@@ -1,59 +1,57 @@
 import { join } from "node:path";
 
-import { runGit } from "./git.mjs";
-import { PLUGIN_MANIFEST_PATH, readPluginVersionAt, writePluginVersion } from "./plugin-manifest.mjs";
-import { compareVersions } from "./version.mjs";
+import { isAncestor, runGit } from "./git.mjs";
+import { PLUGIN_MANIFEST_PATH, writePluginVersion } from "./plugin-manifest.mjs";
 
 const BASE_REVISION = "origin/main";
 
-export const BumpOutcome = Object.freeze({
-  PUSHED: "pushed",
-  PUSHED_BEFORE: "pushed-before",
-  SUPERSEDED: "superseded",
-});
-
 /**
- * Commit a new version of the plugin on top of a pull request's head, and push it to the pull request's branch.
+ * Set the plugin's version on top of a pull request's head, and push it to the pull request's branch.
  *
- * It's safe to repeat: if the branch already has the bump on top of that head (e.g., a previous run died before
- * finishing), it pushes nothing. If the branch moved on otherwise, the bump is left to the run for its new head.
+ * It merges `main` into the head first, unless the head has it already, so that the version can't conflict with
+ * `main`'s later. A conflict in any other file is left for the pull request's author to resolve.
+ *
+ * It pushes nothing if the branch has moved on from the head, since the run for the new head takes over.
  */
 export async function pushVersionBump({ repositoryPath, branch, headSha, version }) {
-  const baseVersion = await readPluginVersionAt(repositoryPath, BASE_REVISION);
-  if (compareVersions(version, baseVersion) < 0) {
-    throw new Error(`Plugin's version must be at least main's (got ${version}, main has ${baseVersion})`);
-  }
-
-  const tipSha = await readBranchTip(repositoryPath, branch);
-  if (tipSha !== headSha) {
-    return describeMovedBranch(repositoryPath, { tipSha, headSha, version });
+  if ((await readBranchTip(repositoryPath, branch)) !== headSha) {
+    return;
   }
 
   await runGit(repositoryPath, ["checkout", "--quiet", "--detach", headSha]);
+  if (!(await isAncestor(repositoryPath, BASE_REVISION, headSha))) {
+    await mergeBase(repositoryPath);
+  }
   await writePluginVersion(join(repositoryPath, PLUGIN_MANIFEST_PATH), version);
-  await runGit(repositoryPath, ["commit", "--quiet", "--message", `chore: Bump the plugin to ${version}`, "--", PLUGIN_MANIFEST_PATH]);
+  await runGit(repositoryPath, ["add", "--", PLUGIN_MANIFEST_PATH]);
+  await runGit(repositoryPath, ["commit", "--quiet", "--message", `chore: Bump the plugin to ${version}`]);
   try {
     await runGit(repositoryPath, ["push", "--quiet", "origin", `HEAD:refs/heads/${branch}`]);
   } catch (error) {
-    const newTipSha = await readBranchTip(repositoryPath, branch);
-    if (newTipSha === headSha) {
+    if ((await readBranchTip(repositoryPath, branch)) === headSha) {
       throw error;
     }
-    return describeMovedBranch(repositoryPath, { tipSha: newTipSha, headSha, version });
   }
-  return BumpOutcome.PUSHED;
+}
+
+async function mergeBase(repositoryPath) {
+  try {
+    await runGit(repositoryPath, ["merge", "--quiet", "--no-ff", "--no-commit", BASE_REVISION]);
+  } catch (error) {
+    const conflictedPaths = await runGit(repositoryPath, ["diff", "--name-only", "--diff-filter=U"]);
+    if (conflictedPaths === "") {
+      throw error;
+    }
+    if (conflictedPaths === PLUGIN_MANIFEST_PATH) {
+      // Take main's manifest, since its version is about to be replaced.
+      await runGit(repositoryPath, ["checkout", "--theirs", "--", PLUGIN_MANIFEST_PATH]);
+    } else {
+      await runGit(repositoryPath, ["merge", "--abort"]);
+    }
+  }
 }
 
 async function readBranchTip(repositoryPath, branch) {
   await runGit(repositoryPath, ["fetch", "--quiet", "origin", `refs/heads/${branch}`]);
   return runGit(repositoryPath, ["rev-parse", "FETCH_HEAD"]);
-}
-
-async function describeMovedBranch(repositoryPath, { tipSha, headSha, version }) {
-  const parentShas = (await runGit(repositoryPath, ["rev-list", "--parents", "--max-count=1", tipSha])).split(" ").slice(1);
-  const isBumpOfHead =
-    parentShas.length === 1 &&
-    parentShas[0] === headSha &&
-    (await readPluginVersionAt(repositoryPath, tipSha)) === version;
-  return isBumpOfHead ? BumpOutcome.PUSHED_BEFORE : BumpOutcome.SUPERSEDED;
 }

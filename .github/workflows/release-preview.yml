@@ -20,7 +20,6 @@ jobs:
     # Editing a closed pull request's title or description triggers the workflow too.
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.state == 'open'
     runs-on: ubuntu-24.04
-    # Covers the wait for main's own release, and the dry run.
     timeout-minutes: 10
     permissions:
       contents: read
@@ -28,9 +27,19 @@ jobs:
     concurrency:
       group: release-preview-${{ github.event.pull_request.head.sha || github.sha }}
       cancel-in-progress: true
+    env:
+      # Fork and Dependabot pull requests get a read-only token, so CI can't set their version.
+      CAN_PUSH: >-
+        ${{
+          (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch')
+          || (
+            github.event.pull_request.head.repo.full_name == github.repository
+            && github.event.pull_request.user.login != 'dependabot[bot]'
+          )
+        }}
     outputs:
-      plugin-version: ${{ steps.preview.outputs.plugin-version }}
-      expected-plugin-version: ${{ steps.preview.outputs.expected-plugin-version }}
+      version-to-bump: ${{ steps.preview.outputs.version-to-bump }}
+      can-push: ${{ env.CAN_PUSH }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -44,7 +53,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        # None of the dependencies that the release needs has an install script.
+        # None of the dependencies that the preview needs has an install script.
         run: npm ci --ignore-scripts
 
       - name: Preview the release that squashing the pull request would make
@@ -55,33 +64,18 @@ jobs:
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || inputs.pull-request }}
           CHECKED_OUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - name: Require the plugin's version to be that of the release
+      - name: Require the plugin's version to be set by hand
+        if: steps.preview.outputs.version-to-bump != '' && env.CAN_PUSH != 'true'
         run: |
-          if [[ "$PLUGIN_VERSION" != "$EXPECTED_PLUGIN_VERSION" ]]; then
-            echo "::error file=.claude-plugin/plugin.json::Plugin's version must be $EXPECTED_PLUGIN_VERSION (got $PLUGIN_VERSION)"
-            exit 1
-          fi
+          echo "::error file=.claude-plugin/plugin.json::Plugin's version must be $VERSION_TO_BUMP, which CI can't set on this pull request's branch"
+          exit 1
         env:
-          PLUGIN_VERSION: ${{ steps.preview.outputs.plugin-version }}
-          EXPECTED_PLUGIN_VERSION: ${{ steps.preview.outputs.expected-plugin-version }}
+          VERSION_TO_BUMP: ${{ steps.preview.outputs.version-to-bump }}
 
   # Runs none of the npm dependencies, since it's the only job on a pull request that can push.
   bump-version:
     needs: preview
-    # Fork and Dependabot pull requests get a read-only token, so the version has to be set by hand. A dispatched run
-    # can bump too, in case the title or description changed whilst the bump it was dispatched for was being pushed.
-    if: >-
-      !cancelled()
-      && needs.preview.outputs.expected-plugin-version != ''
-      && needs.preview.outputs.plugin-version != needs.preview.outputs.expected-plugin-version
-      && (
-        (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch')
-        || (
-          github.event_name == 'pull_request'
-          && github.event.pull_request.head.repo.full_name == github.repository
-          && github.event.pull_request.user.login != 'dependabot[bot]'
-        )
-      )
+    if: needs.preview.outputs.version-to-bump != '' && needs.preview.outputs.can-push == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -94,32 +88,26 @@ jobs:
     env:
       BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || inputs.pull-request }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.HEAD_SHA }}
           fetch-depth: 0
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24.22.2
-
       - name: Push the bump to the pull request's branch
-        id: bump
         run: node .github/scripts/release/bump-plugin-version.mjs
         env:
-          VERSION: ${{ needs.preview.outputs.expected-plugin-version }}
+          VERSION: ${{ needs.preview.outputs.version-to-bump }}
 
-      - name: Run the checks on the bumped head
-        if: steps.bump.outputs.is-bump-on-branch == 'true'
+      # The push can't start workflows, since it uses the workflow's token.
+      - name: Run the checks on the branch's new head
         run: |
           function dispatch {
             for attempt in 1 2 3; do
               gh workflow run "$@" --repo "$GITHUB_REPOSITORY" --ref "$BRANCH" && return 0
               sleep $((attempt * 10))
             done
-            echo "::error::Couldn't run $1 on the bumped head: re-run this job on its own, which pushes nothing again"
+            echo "::error::Couldn't run $1 on the branch's new head: re-run this job on its own, which pushes nothing again"
             return 1
           }
           has_failed=false
@@ -128,3 +116,4 @@ jobs:
           [[ "$has_failed" == false ]]
         env:
           GH_TOKEN: ${{ github.token }}
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || inputs.pull-request }}

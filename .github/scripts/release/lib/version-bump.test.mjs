@@ -5,30 +5,46 @@ import { describe, test } from "node:test";
 
 import { runGit } from "./git.mjs";
 import { readPluginVersionAt } from "./plugin-manifest.mjs";
-import { commitEmpty, commitPluginVersion, makeRepositoryWithOrigin } from "./testing.mjs";
-import { BumpOutcome, pushVersionBump } from "./version-bump.mjs";
+import { commitEmpty, commitFile, commitPluginVersion, makeRepositoryWithOrigin } from "./testing.mjs";
+import { pushVersionBump } from "./version-bump.mjs";
 
-/** Make a pull request's branch on `origin`, and a checkout of its head, as the job has. */
-async function makePullRequest(t) {
+/**
+ * Make `main` with the plugin at 1.11.0, and a pull request's branch from it on `origin`, with the commits given.
+ */
+async function makePullRequest(t, { commitHead = (path) => commitEmpty(path, "feat: Add a skill") } = {}) {
   const { directory, originPath, repositoryPath } = await makeRepositoryWithOrigin(t);
   await commitPluginVersion(repositoryPath, "1.11.0", "Release 1.11.0");
   await runGit(repositoryPath, ["push", "--quiet", "origin", "main"]);
   await runGit(repositoryPath, ["checkout", "--quiet", "-b", "feature"]);
-  const headSha = await commitEmpty(repositoryPath, "feat: Add a skill");
+  await commitHead(repositoryPath);
   await runGit(repositoryPath, ["push", "--quiet", "origin", "feature"]);
-  const checkoutPath = await cloneHead(directory, originPath, headSha, "checkout");
-  return { directory, originPath, authorPath: repositoryPath, checkoutPath, headSha };
+  return { directory, originPath, authorPath: repositoryPath };
 }
 
-async function cloneHead(directory, originPath, headSha, name) {
-  const path = join(directory, name);
-  await runGit(directory, ["clone", "--quiet", originPath, path]);
-  await runGit(path, ["checkout", "--quiet", "--detach", headSha]);
-  return path;
+/** Push a commit to `main` from the author's repository, leaving the pull request's branch checked out. */
+async function pushToMain(authorPath, commit) {
+  await runGit(authorPath, ["checkout", "--quiet", "main"]);
+  const sha = await commit(authorPath);
+  await runGit(authorPath, ["push", "--quiet", "origin", "main"]);
+  await runGit(authorPath, ["checkout", "--quiet", "feature"]);
+  return sha;
+}
+
+/** Check out the pull request's head as the job does. */
+async function checkOutHead(directory, originPath) {
+  const checkoutPath = join(directory, "checkout");
+  await runGit(directory, ["clone", "--quiet", originPath, checkoutPath]);
+  const headSha = await runGit(checkoutPath, ["rev-parse", "origin/feature"]);
+  await runGit(checkoutPath, ["checkout", "--quiet", "--detach", headSha]);
+  return { checkoutPath, headSha };
 }
 
 async function readBranchTip(originPath) {
   return runGit(originPath, ["rev-parse", "refs/heads/feature"]);
+}
+
+async function readParents(originPath, sha) {
+  return (await runGit(originPath, ["rev-list", "--parents", "--max-count=1", sha])).split(" ").slice(1);
 }
 
 async function installPreReceiveHook(originPath, script) {
@@ -39,13 +55,13 @@ async function installPreReceiveHook(originPath, script) {
 
 describe("pushVersionBump", () => {
   test("pushes a commit on top of the head that only changes the version", async (t) => {
-    const { originPath, checkoutPath, headSha } = await makePullRequest(t);
+    const { directory, originPath } = await makePullRequest(t);
+    const { checkoutPath, headSha } = await checkOutHead(directory, originPath);
 
-    const outcome = await pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.12.0" });
+    await pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.12.0" });
 
-    assert.equal(outcome, BumpOutcome.PUSHED);
     const tipSha = await readBranchTip(originPath);
-    assert.equal(await runGit(originPath, ["rev-parse", `${tipSha}^`]), headSha);
+    assert.deepEqual(await readParents(originPath, tipSha), [headSha]);
     assert.equal(await readPluginVersionAt(originPath, tipSha), "1.12.0");
     assert.equal(await runGit(originPath, ["diff", "--name-only", headSha, tipSha]), ".claude-plugin/plugin.json");
     assert.equal(
@@ -54,66 +70,73 @@ describe("pushVersionBump", () => {
     );
   });
 
-  test("pushes nothing when a previous run pushed the bump", async (t) => {
-    const { directory, originPath, checkoutPath, headSha } = await makePullRequest(t);
-    await pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.12.0" });
+  test("merges main first when the head doesn't have it", async (t) => {
+    const { directory, originPath, authorPath } = await makePullRequest(t);
+    const mainSha = await pushToMain(authorPath, (path) => commitPluginVersion(path, "1.12.0", "feat: Add a skill"));
+    const { checkoutPath, headSha } = await checkOutHead(directory, originPath);
+
+    await pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.13.0" });
+
     const tipSha = await readBranchTip(originPath);
-    const rerunCheckoutPath = await cloneHead(directory, originPath, headSha, "rerun");
+    assert.deepEqual(await readParents(originPath, tipSha), [headSha, mainSha]);
+    assert.equal(await readPluginVersionAt(originPath, tipSha), "1.13.0");
+  });
 
-    const outcome = await pushVersionBump({
-      repositoryPath: rerunCheckoutPath,
-      branch: "feature",
-      headSha,
-      version: "1.12.0",
+  test("resolves a conflict with main in the version", async (t) => {
+    const { directory, originPath, authorPath } = await makePullRequest(t, {
+      commitHead: (path) => commitPluginVersion(path, "1.11.1", "fix: Correct a skill"),
     });
+    const mainSha = await pushToMain(authorPath, (path) => commitPluginVersion(path, "1.12.0", "feat: Add a skill"));
+    const { checkoutPath, headSha } = await checkOutHead(directory, originPath);
 
-    assert.equal(outcome, BumpOutcome.PUSHED_BEFORE);
-    assert.equal(await readBranchTip(originPath), tipSha);
+    await pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.12.1" });
+
+    const tipSha = await readBranchTip(originPath);
+    assert.deepEqual(await readParents(originPath, tipSha), [headSha, mainSha]);
+    assert.equal(await readPluginVersionAt(originPath, tipSha), "1.12.1");
+  });
+
+  test("leaves a conflict with main in another file to the author", async (t) => {
+    const { directory, originPath, authorPath } = await makePullRequest(t, {
+      commitHead: (path) => commitFile(path, { path: "README.md", content: "Feature\n", message: "docs: Reword" }),
+    });
+    await pushToMain(authorPath, (path) => commitFile(path, { path: "README.md", content: "Main\n", message: "docs: Reword" }));
+    const { checkoutPath, headSha } = await checkOutHead(directory, originPath);
+
+    await pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.12.0" });
+
+    const tipSha = await readBranchTip(originPath);
+    assert.deepEqual(await readParents(originPath, tipSha), [headSha]);
+    assert.equal(await readPluginVersionAt(originPath, tipSha), "1.12.0");
   });
 
   test("pushes nothing when the branch moved on", async (t) => {
-    const { originPath, authorPath, checkoutPath, headSha } = await makePullRequest(t);
+    const { directory, originPath, authorPath } = await makePullRequest(t);
+    const { checkoutPath, headSha } = await checkOutHead(directory, originPath);
     const newHeadSha = await commitEmpty(authorPath, "feat: Add another skill");
     await runGit(authorPath, ["push", "--quiet", "origin", "feature"]);
 
-    const outcome = await pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.12.0" });
+    await pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.12.0" });
 
-    assert.equal(outcome, BumpOutcome.SUPERSEDED);
     assert.equal(await readBranchTip(originPath), newHeadSha);
   });
 
-  test("pushes nothing when the branch has a different bump on top of the head", async (t) => {
-    const { directory, originPath, checkoutPath, headSha } = await makePullRequest(t);
-    await pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.12.0" });
-    const tipSha = await readBranchTip(originPath);
-    const rerunCheckoutPath = await cloneHead(directory, originPath, headSha, "rerun");
-
-    const outcome = await pushVersionBump({
-      repositoryPath: rerunCheckoutPath,
-      branch: "feature",
-      headSha,
-      version: "2.0.0",
-    });
-
-    assert.equal(outcome, BumpOutcome.SUPERSEDED);
-    assert.equal(await readBranchTip(originPath), tipSha);
-  });
-
-  test("reports the branch as moved on when it moves during the push", async (t) => {
-    const { originPath, authorPath, checkoutPath, headSha } = await makePullRequest(t);
+  test("pushes nothing when the branch moves on during the push", async (t) => {
+    const { directory, originPath, authorPath } = await makePullRequest(t);
+    const { checkoutPath, headSha } = await checkOutHead(directory, originPath);
     const newHeadSha = await commitEmpty(authorPath, "feat: Add another skill");
     await runGit(authorPath, ["push", "--quiet", "origin", `${newHeadSha}:refs/heads/other`]);
     // Git refuses to update refs whilst it quarantines the objects being pushed, unless told it's outside the quarantine.
     await installPreReceiveHook(originPath, `env -u GIT_QUARANTINE_PATH git update-ref refs/heads/feature ${newHeadSha}\nexit 1`);
 
-    const outcome = await pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.12.0" });
+    await pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.12.0" });
 
-    assert.equal(outcome, BumpOutcome.SUPERSEDED);
     assert.equal(await readBranchTip(originPath), newHeadSha);
   });
 
   test("fails when the push fails for another reason", async (t) => {
-    const { originPath, checkoutPath, headSha } = await makePullRequest(t);
+    const { directory, originPath } = await makePullRequest(t);
+    const { checkoutPath, headSha } = await checkOutHead(directory, originPath);
     await installPreReceiveHook(originPath, "exit 1");
 
     await assert.rejects(
@@ -123,34 +146,13 @@ describe("pushVersionBump", () => {
     assert.equal(await readBranchTip(originPath), headSha);
   });
 
-  test("accepts main's version, which undoes a bump", async (t) => {
-    const { directory, originPath, authorPath } = await makePullRequest(t);
-    const headSha = await commitPluginVersion(authorPath, "1.12.0", "chore: Bump the plugin to 1.12.0");
-    await runGit(authorPath, ["push", "--quiet", "origin", "feature"]);
-    const checkoutPath = await cloneHead(directory, originPath, headSha, "undo");
-
-    const outcome = await pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.11.0" });
-
-    assert.equal(outcome, BumpOutcome.PUSHED);
-    assert.equal(await readPluginVersionAt(originPath, "refs/heads/feature"), "1.11.0");
-  });
-
-  test("refuses a version lower than main's", async (t) => {
-    const { originPath, checkoutPath, headSha } = await makePullRequest(t);
-
-    await assert.rejects(
-      pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.10.9" }),
-      { message: "Plugin's version must be at least main's (got 1.10.9, main has 1.11.0)" },
-    );
-    assert.equal(await readBranchTip(originPath), headSha);
-  });
-
   test("refuses anything other than a version", async (t) => {
-    const { originPath, checkoutPath, headSha } = await makePullRequest(t);
+    const { directory, originPath } = await makePullRequest(t);
+    const { checkoutPath, headSha } = await checkOutHead(directory, originPath);
 
     await assert.rejects(
       pushVersionBump({ repositoryPath: checkoutPath, branch: "feature", headSha, version: "1.12.0; rm -rf /" }),
-      { message: 'Version must be "(major).(minor).(patch)" (got "1.12.0; rm -rf /")' },
+      { message: 'Plugin version must be a version (got "1.12.0; rm -rf /")' },
     );
     assert.equal(await readBranchTip(originPath), headSha);
   });

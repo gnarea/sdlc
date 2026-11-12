@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { isAncestor, listChangedPaths, makeSquashCommit, readLastReleaseVersion, runGit } from "./git.mjs";
+import { hasRef, isAncestor, listChangedPaths, makeSquashCommit, mergeTrees, readLastReleaseVersion, runGit } from "./git.mjs";
 import { commitEmpty, commitFile, makeRepositoryWithOrigin } from "./testing.mjs";
 
 describe("readLastReleaseVersion", () => {
@@ -42,40 +42,68 @@ describe("readLastReleaseVersion", () => {
 });
 
 describe("makeSquashCommit", () => {
-  test("makes a commit on the base with the merged tree and the message", async (t) => {
+  test("makes a commit on the base with the base's tree and the message", async (t) => {
     const { repositoryPath } = await makeRepositoryWithOrigin(t);
     const baseSha = await commitFile(repositoryPath, { path: "base.md", content: "Base\n", message: "Base" });
-    await runGit(repositoryPath, ["checkout", "--quiet", "-b", "feature"]);
-    await commitFile(repositoryPath, { path: "feature.md", content: "Feature\n", message: "Feature" });
-    await runGit(repositoryPath, ["checkout", "--quiet", "main"]);
-    const movedBaseSha = await commitFile(repositoryPath, { path: "base.md", content: "Moved\n", message: "Move" });
 
     const squashSha = await makeSquashCommit(repositoryPath, {
       baseRevision: "main",
-      headRevision: "feature",
       message: "feat: Add a feature (#7)\n\nWith a description.",
     });
 
-    assert.equal(await runGit(repositoryPath, ["rev-parse", `${squashSha}^`]), movedBaseSha);
-    assert.notEqual(movedBaseSha, baseSha);
+    assert.equal(await runGit(repositoryPath, ["rev-parse", `${squashSha}^`]), baseSha);
+    assert.equal(await runGit(repositoryPath, ["rev-parse", `${squashSha}^{tree}`]), await runGit(repositoryPath, ["rev-parse", `${baseSha}^{tree}`]));
     assert.equal(await runGit(repositoryPath, ["log", "-1", "--format=%B", squashSha]), "feat: Add a feature (#7)\n\nWith a description.");
-    assert.equal(await runGit(repositoryPath, ["show", `${squashSha}:base.md`]), "Moved");
-    assert.equal(await runGit(repositoryPath, ["show", `${squashSha}:feature.md`]), "Feature");
-    assert.equal(await runGit(repositoryPath, ["rev-parse", "HEAD"]), movedBaseSha);
+    assert.equal(await runGit(repositoryPath, ["rev-parse", "HEAD"]), baseSha);
   });
+});
 
-  test("refuses a head that conflicts with the base", async (t) => {
+describe("mergeTrees", () => {
+  async function makeDivergedBranches(t, featureContent) {
     const { repositoryPath } = await makeRepositoryWithOrigin(t);
     await commitFile(repositoryPath, { path: "file.md", content: "Base\n", message: "Base" });
     await runGit(repositoryPath, ["checkout", "--quiet", "-b", "feature"]);
-    await commitFile(repositoryPath, { path: "file.md", content: "Feature\n", message: "Feature" });
+    await commitFile(repositoryPath, { path: "other.md", content: "Other\n", message: "Other" });
+    await commitFile(repositoryPath, { path: "file.md", content: featureContent, message: "Feature" });
     await runGit(repositoryPath, ["checkout", "--quiet", "main"]);
     await commitFile(repositoryPath, { path: "file.md", content: "Main\n", message: "Main" });
+    return repositoryPath;
+  }
 
-    await assert.rejects(
-      makeSquashCommit(repositoryPath, { baseRevision: "main", headRevision: "feature", message: "feat: Conflict" }),
-      { message: "Head must merge into the base without conflicts (got conflicts with main)" },
-    );
+  test("returns the merged tree when nothing conflicts", async (t) => {
+    const repositoryPath = await makeDivergedBranches(t, "Main\n");
+
+    const { tree, conflictedPaths } = await mergeTrees(repositoryPath, "main", "feature");
+
+    assert.deepEqual(conflictedPaths, []);
+    assert.equal(await runGit(repositoryPath, ["show", `${tree}:file.md`]), "Main");
+    assert.equal(await runGit(repositoryPath, ["show", `${tree}:other.md`]), "Other");
+  });
+
+  test("returns the conflicted paths", async (t) => {
+    const repositoryPath = await makeDivergedBranches(t, "Feature\n");
+
+    const { tree, conflictedPaths } = await mergeTrees(repositoryPath, "main", "feature");
+
+    assert.deepEqual(conflictedPaths, ["file.md"]);
+    assert.equal(await runGit(repositoryPath, ["show", `${tree}:other.md`]), "Other");
+  });
+
+  test("refuses a revision that doesn't exist", async (t) => {
+    const repositoryPath = await makeDivergedBranches(t, "Feature\n");
+
+    await assert.rejects(mergeTrees(repositoryPath, "main", "missing"));
+  });
+});
+
+describe("hasRef", () => {
+  test("says whether a ref exists", async (t) => {
+    const { repositoryPath } = await makeRepositoryWithOrigin(t);
+    await commitEmpty(repositoryPath, "First");
+    await runGit(repositoryPath, ["tag", "v1.0.0"]);
+
+    assert.equal(await hasRef(repositoryPath, "refs/tags/v1.0.0"), true);
+    assert.equal(await hasRef(repositoryPath, "refs/tags/v2.0.0"), false);
   });
 });
 
@@ -98,21 +126,25 @@ describe("isAncestor", () => {
 });
 
 describe("listChangedPaths", () => {
-  test("lists the paths that differ between the revisions", async (t) => {
+  test("lists the paths that the head changed since it diverged from the base", async (t) => {
     const { repositoryPath } = await makeRepositoryWithOrigin(t);
-    const firstSha = await commitFile(repositoryPath, { path: "kept.md", content: "Kept\n", message: "First" });
+    await commitFile(repositoryPath, { path: "kept.md", content: "Kept\n", message: "First" });
+    await runGit(repositoryPath, ["checkout", "--quiet", "-b", "feature"]);
     await commitFile(repositoryPath, { path: "skills/a/SKILL.md", content: "A\n", message: "Second" });
     await runGit(repositoryPath, ["mv", "kept.md", "moved.md"]);
     await runGit(repositoryPath, ["commit", "--quiet", "--message", "Third"]);
+    await runGit(repositoryPath, ["checkout", "--quiet", "main"]);
+    await commitFile(repositoryPath, { path: "main.md", content: "Main\n", message: "Main" });
 
-    assert.deepEqual(await listChangedPaths(repositoryPath, firstSha, "HEAD"), ["kept.md", "moved.md", "skills/a/SKILL.md"]);
+    assert.deepEqual(await listChangedPaths(repositoryPath, "main", "feature"), ["kept.md", "moved.md", "skills/a/SKILL.md"]);
   });
 
-  test("lists nothing when the revisions have the same tree", async (t) => {
+  test("lists nothing when the head changed nothing", async (t) => {
     const { repositoryPath } = await makeRepositoryWithOrigin(t);
-    const firstSha = await commitFile(repositoryPath, { path: "file.md", content: "File\n", message: "First" });
+    await commitFile(repositoryPath, { path: "file.md", content: "File\n", message: "First" });
+    await runGit(repositoryPath, ["checkout", "--quiet", "-b", "feature"]);
     await commitEmpty(repositoryPath, "Second");
 
-    assert.deepEqual(await listChangedPaths(repositoryPath, firstSha, "HEAD"), []);
+    assert.deepEqual(await listChangedPaths(repositoryPath, "main", "feature"), []);
   });
 });
