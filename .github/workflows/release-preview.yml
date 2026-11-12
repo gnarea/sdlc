@@ -1,0 +1,130 @@
+name: Release preview
+
+on:
+  pull_request:
+    branches: [main]
+    # `edited` covers a change to the title or the description, which the squash commit's message takes.
+    types: [opened, reopened, synchronize, edited]
+  # For the head that the version bump pushes, since its push can't start workflows.
+  workflow_dispatch:
+    inputs:
+      pull-request:
+        description: Number of the pull request whose head is the branch's
+        required: true
+        type: number
+
+permissions: {}
+
+jobs:
+  preview:
+    # Editing a closed pull request's title or description triggers the workflow too.
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.state == 'open'
+    runs-on: ubuntu-24.04
+    # Covers the wait for main's own release, and the dry run.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    concurrency:
+      group: release-preview-${{ github.event.pull_request.head.sha || github.sha }}
+      cancel-in-progress: true
+    outputs:
+      plugin-version: ${{ steps.preview.outputs.plugin-version }}
+      expected-plugin-version: ${{ steps.preview.outputs.expected-plugin-version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.2
+          cache: npm
+
+      - name: Install dependencies
+        # None of the dependencies that the release needs has an install script.
+        run: npm ci --ignore-scripts
+
+      - name: Preview the release that squashing the pull request would make
+        id: preview
+        run: node .github/scripts/release/preview-release.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || inputs.pull-request }}
+          CHECKED_OUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Require the plugin's version to be that of the release
+        run: |
+          if [[ "$PLUGIN_VERSION" != "$EXPECTED_PLUGIN_VERSION" ]]; then
+            echo "::error file=.claude-plugin/plugin.json::Plugin's version must be $EXPECTED_PLUGIN_VERSION (got $PLUGIN_VERSION)"
+            exit 1
+          fi
+        env:
+          PLUGIN_VERSION: ${{ steps.preview.outputs.plugin-version }}
+          EXPECTED_PLUGIN_VERSION: ${{ steps.preview.outputs.expected-plugin-version }}
+
+  # Runs none of the npm dependencies, since it's the only job on a pull request that can push.
+  bump-version:
+    needs: preview
+    # Fork and Dependabot pull requests get a read-only token, so the version has to be set by hand. A dispatched run
+    # can bump too, in case the title or description changed whilst the bump it was dispatched for was being pushed.
+    if: >-
+      !cancelled()
+      && needs.preview.outputs.expected-plugin-version != ''
+      && needs.preview.outputs.plugin-version != needs.preview.outputs.expected-plugin-version
+      && (
+        (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch')
+        || (
+          github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && github.event.pull_request.user.login != 'dependabot[bot]'
+        )
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      actions: write
+    concurrency:
+      group: bump-version-${{ github.event.pull_request.number || inputs.pull-request }}
+      # Cancelling it between the push and the dispatch would leave the new head without checks.
+      cancel-in-progress: false
+    env:
+      BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || inputs.pull-request }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.2
+
+      - name: Push the bump to the pull request's branch
+        id: bump
+        run: node .github/scripts/release/bump-plugin-version.mjs
+        env:
+          VERSION: ${{ needs.preview.outputs.expected-plugin-version }}
+
+      - name: Run the checks on the bumped head
+        if: steps.bump.outputs.is-bump-on-branch == 'true'
+        run: |
+          function dispatch {
+            for attempt in 1 2 3; do
+              gh workflow run "$@" --repo "$GITHUB_REPOSITORY" --ref "$BRANCH" && return 0
+              sleep $((attempt * 10))
+            done
+            echo "::error::Couldn't run $1 on the bumped head: re-run this job on its own, which pushes nothing again"
+            return 1
+          }
+          has_failed=false
+          dispatch ci.yml || has_failed=true
+          dispatch release-preview.yml --field "pull-request=$PULL_REQUEST_NUMBER" || has_failed=true
+          [[ "$has_failed" == false ]]
+        env:
+          GH_TOKEN: ${{ github.token }}

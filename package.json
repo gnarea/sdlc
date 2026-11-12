@@ -12,14 +12,18 @@
     "lint": "markdownlint-cli2",
     "validate:skills": "uv run --locked .github/scripts/validate_skills.py skills",
     "validate:plugin": "claude plugin validate . && claude plugin validate --strict skills && claude plugin validate --strict agents",
-    "test:evals": "uv run --locked python -I -B -m unittest discover --start-directory evals/runner --top-level-directory evals/runner"
+    "test:evals": "uv run --locked python -I -B -m unittest discover --start-directory evals/runner --top-level-directory evals/runner",
+    "test:release": "node --test \".github/scripts/release/**/*.test.mjs\""
   },
   "devDependencies": {
     "@anthropic-ai/claude-code": "2.1.317",
     "@cspell/dict-en-common-misspellings": "2.2.5",
     "@cspell/dict-en-gb-ise": "1.0.38",
+    "conventional-changelog-conventionalcommits": "9.3.1",
     "cspell": "10.4.0",
-    "markdownlint-cli2": "0.24.0"
+    "lodash-es": "4.18.1",
+    "markdownlint-cli2": "0.24.0",
+    "semantic-release": "25.0.9"
   },
   "allowScripts": {
     "@anthropic-ai/claude-code": true

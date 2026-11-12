@@ -7,6 +7,9 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    # Pull requests' titles must follow Conventional Commits, and dependency updates don't change the plugin.
+    commit-message:
+      prefix: chore
 
   - package-ecosystem: npm
     directory: /
@@ -14,6 +17,9 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    # Pull requests' titles must follow Conventional Commits, and dependency updates don't change the plugin.
+    commit-message:
+      prefix: chore
 
   - package-ecosystem: uv
     directory: /
@@ -21,3 +27,6 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    # Pull requests' titles must follow Conventional Commits, and dependency updates don't change the plugin.
+    commit-message:
+      prefix: chore
