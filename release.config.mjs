@@ -1,7 +1,5 @@
-const CONVENTIONAL_COMMITS_PRESET = "conventionalcommits";
-
-// The only types that the pull request check accepts.
-export const COMMIT_TYPES = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "revert", "style", "test"];
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 const RELEASE_BODY_TEMPLATE = `<%= nextRelease.notes %>
 ## Installing
@@ -12,19 +10,21 @@ const RELEASE_BODY_TEMPLATE = `<%= nextRelease.notes %>
 \`\`\`
 `;
 
-export const COMMIT_ANALYZER_PLUGIN = ["@semantic-release/commit-analyzer", { preset: CONVENTIONAL_COMMITS_PRESET }];
-
-export const RELEASE_NOTES_GENERATOR_PLUGIN = [
-  "@semantic-release/release-notes-generator",
-  { preset: CONVENTIONAL_COMMITS_PRESET },
-];
-
 export default {
   branches: ["main"],
+  preset: "conventionalcommits",
   plugins: [
-    COMMIT_ANALYZER_PLUGIN,
-    RELEASE_NOTES_GENERATOR_PLUGIN,
-    "./.github/scripts/release/verify-plugin-version.mjs",
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    {
+      // CI sets the version in the pull request, so a mismatch means that it was merged before CI could.
+      async verifyRelease(_pluginConfig, { cwd, nextRelease }) {
+        const manifest = JSON.parse(await readFile(join(cwd, ".claude-plugin/plugin.json"), "utf8"));
+        if (manifest.version !== nextRelease.version) {
+          throw new Error(`Plugin's version must be ${nextRelease.version} (got ${manifest.version})`);
+        }
+      },
+    },
     [
       "@semantic-release/github",
       {

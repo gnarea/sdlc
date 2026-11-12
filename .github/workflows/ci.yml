@@ -3,16 +3,21 @@ name: CI
 on:
   pull_request:
     branches: [main]
-  # For the head that the release preview's version bump pushes, since its push can't start workflows.
+    # `edited` covers a change to the title or the description, which the squash commit takes.
+    types: [opened, reopened, synchronize, edited]
+  push:
+    branches: [main]
+  # For the head that the version bump pushes, since pushes with the workflow's token start no workflows.
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   ci:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -48,5 +53,121 @@ jobs:
       - name: Test the eval suite's wrapper
         run: npm run test:evals
 
-      - name: Test the release scripts
-        run: npm run test:release
+  dry-run:
+    # Edits to a closed pull request would otherwise push the bump to its deleted branch.
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.state == 'open'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: read
+      actions: write
+    env:
+      PULL_REQUEST: ${{ github.event.pull_request.number || github.ref_name }}
+      BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.2
+          cache: npm
+
+      - name: Install dependencies
+        # The job can push, so none of the dependencies' install scripts may run. semantic-release needs none.
+        run: npm ci --ignore-scripts
+
+      - name: Require the pull request's title to follow Conventional Commits
+        run: |
+          title="$(gh pr view "$PULL_REQUEST" --json title --jq .title)"
+          types="build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test"
+          pattern="^($types)(\([a-z0-9-]+\))?!?: [^ ]"
+          if [[ ! "$title" =~ $pattern ]]; then
+            echo "::error::Pull request's title must follow Conventional Commits, with one of the types ${types//|/, } (got \"$title\")"
+            exit 1
+          fi
+
+      - name: Preview the release that squashing the pull request would make
+        id: dry-run
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          main_version="$(git show origin/main:.claude-plugin/plugin.json | jq --raw-output .version)"
+          # Treat main's version as released, in case its release is still running.
+          git tag "v$main_version" origin/main 2>/dev/null || true
+          git switch --quiet --force-create main origin/main
+          gh pr view "$PULL_REQUEST" --json number,title,body --jq '"\(.title) (#\(.number))\n\n\(.body)"' |
+            git commit --quiet --allow-empty --file -
+          # semantic-release checks that it can push to the repository, so git has to resolve its URL to this local
+          # copy, which has the squash commit. Without GitHub Actions' variables, it takes the branch from git.
+          GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="url.$PWD.insteadOf" GIT_CONFIG_VALUE_0="$REPOSITORY_URL" \
+            env -u GITHUB_ACTIONS npm exec --no -- semantic-release --dry-run --repository-url "$REPOSITORY_URL" \
+            --plugins @semantic-release/commit-analyzer,@semantic-release/release-notes-generator |
+            tee "$RUNNER_TEMP/dry-run.log"
+          next_version="$(sed -n 's/.*The next release version is \([0-9.]*\).*/\1/p' "$RUNNER_TEMP/dry-run.log")"
+          echo "next-version=$next_version" >> "$GITHUB_OUTPUT"
+          echo "main-version=$main_version" >> "$GITHUB_OUTPUT"
+        env:
+          REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+
+      - name: Require a release for changes to agents or skills
+        # Existing users only get a change to what Claude Code loads when the version changes.
+        if: steps.dry-run.outputs.next-version == ''
+        run: |
+          if ! git diff --quiet "origin/main...$HEAD_SHA" -- agents skills; then
+            echo "::error::Pull request changes agents or skills, so its type must release a version, such as feat or fix"
+            exit 1
+          fi
+
+      - name: Set the plugin's version on the pull request's branch
+        run: |
+          # A conflict with main has to be resolved before the version can be set.
+          tree="$(git merge-tree --write-tree origin/main "$HEAD_SHA")" || exit 0
+          merged_version="$(git show "$tree:.claude-plugin/plugin.json" | jq --raw-output .version)"
+          if [[ "$merged_version" == "$VERSION" ]]; then
+            exit 0
+          fi
+          git switch --quiet --detach "$HEAD_SHA"
+          jq --arg version "$VERSION" '.version = $version' .claude-plugin/plugin.json > "$RUNNER_TEMP/plugin.json"
+          mv "$RUNNER_TEMP/plugin.json" .claude-plugin/plugin.json
+          git commit --quiet --message "chore: Set the plugin's version to $VERSION" .claude-plugin/plugin.json
+          if ! git push --quiet origin "HEAD:refs/heads/$BRANCH"; then
+            echo "::error file=.claude-plugin/plugin.json::Plugin's version must be $VERSION"
+            exit 1
+          fi
+          gh workflow run ci.yml --ref "$BRANCH"
+        env:
+          VERSION: ${{ steps.dry-run.outputs.next-version || steps.dry-run.outputs.main-version }}
+
+  release:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    # Each release builds on the last one's tag, so they have to happen one at a time, in order.
+    concurrency: release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.2
+          cache: npm
+
+      - name: Install dependencies
+        # The job can push tags, so none of the dependencies' install scripts may run. semantic-release needs none.
+        run: npm ci --ignore-scripts
+
+      - name: Tag the commit and publish its release, if it warrants one
+        run: npm exec --no -- semantic-release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

@@ -12,8 +12,7 @@
     "lint": "markdownlint-cli2",
     "validate:skills": "uv run --locked .github/scripts/validate_skills.py skills",
     "validate:plugin": "claude plugin validate . && claude plugin validate --strict skills && claude plugin validate --strict agents",
-    "test:evals": "uv run --locked python -I -B -m unittest discover --start-directory evals/runner --top-level-directory evals/runner",
-    "test:release": "node --test \".github/scripts/release/**/*.test.mjs\""
+    "test:evals": "uv run --locked python -I -B -m unittest discover --start-directory evals/runner --top-level-directory evals/runner"
   },
   "devDependencies": {
     "@anthropic-ai/claude-code": "2.1.317",

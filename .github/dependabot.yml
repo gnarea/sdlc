@@ -1,4 +1,3 @@
-# Updates take the `chore` prefix, since pull requests' titles must follow Conventional Commits, and they don't change the plugin.
 version: 2
 
 updates:
