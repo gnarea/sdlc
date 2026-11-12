@@ -6,25 +6,21 @@ on:
     types: [opened, reopened, synchronize, edited]
   push:
     branches: [main]
-  workflow_dispatch:
 
 permissions: {}
 
 jobs:
-  dry-run:
-    # Edits to a closed pull request would otherwise push the bump to its deleted branch.
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.state == 'open'
+  version:
+    # Edits to a closed pull request would otherwise push the version to its deleted branch.
+    if: github.event.pull_request.state == 'open'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write
-      pull-requests: read
-      actions: write
     env:
-      PULL_REQUEST: ${{ github.event.pull_request.number || github.ref_name }}
-      BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
-      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-      GH_TOKEN: ${{ github.token }}
+      BASE: ${{ github.base_ref }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      TITLE: ${{ github.event.pull_request.title }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -42,10 +38,9 @@ jobs:
 
       - name: Require the pull request's title to follow Conventional Commits
         run: |
-          title="$(gh pr view "$PULL_REQUEST" --json title --jq .title)"
           pattern='^[a-z]+(\([a-z0-9-]+\))?!?: [^ ]'
-          if [[ ! "$title" =~ $pattern ]]; then
-            echo "::error::Pull request's title must follow Conventional Commits (got \"$title\")"
+          if [[ ! "$TITLE" =~ $pattern ]]; then
+            echo "::error::Pull request's title must follow Conventional Commits (got \"$TITLE\")"
             exit 1
           fi
 
@@ -53,19 +48,21 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Treat main's version as released, in case its release is still running.
-          git tag "v$(git show origin/main:.claude-plugin/plugin.json | jq --raw-output .version)" origin/main 2>/dev/null || true
-          message="$(gh pr view "$PULL_REQUEST" --json number,title,body --jq '"\(.title) (#\(.number))\n\n\(.body)"')"
-          git switch --quiet --force-create main "$(git commit-tree "$HEAD_SHA^{tree}" -p origin/main -m "$message")"
+          # Treat the base's version as released, in case its release is still running.
+          git tag "v$(git show "origin/$BASE:.claude-plugin/plugin.json" | jq --raw-output .version)" "origin/$BASE" 2>/dev/null || true
+          message="$(printf '%s (#%s)\n\n%s' "$TITLE" "$PULL_REQUEST" "$BODY")"
+          git switch --quiet --force-create "$BASE" "$(git commit-tree "$HEAD_SHA^{tree}" -p "origin/$BASE" -m "$message")"
           # Without GitHub Actions' variables, semantic-release takes the branch from git, rather than the pull request's.
           env -u GITHUB_ACTIONS npm exec --no -- semantic-release --dry-run
         env:
+          PULL_REQUEST: ${{ github.event.pull_request.number }}
+          BODY: ${{ github.event.pull_request.body }}
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Require a new version for changes to agents or skills
         # Existing users only get a change to what Claude Code loads when the version changes.
         run: |
-          base="$(git merge-base origin/main "$HEAD_SHA")"
+          base="$(git merge-base "origin/$BASE" "$HEAD_SHA")"
           if git diff --quiet "$base" -- .claude-plugin/plugin.json && ! git diff --quiet "$base" "$HEAD_SHA" -- agents skills; then
             echo "::error::Pull request changes agents or skills, so its type must release a version, such as feat or fix"
             exit 1
@@ -76,15 +73,15 @@ jobs:
           if git diff --quiet; then
             exit 0
           fi
+          version="$(jq --raw-output .version .claude-plugin/plugin.json)"
           git switch --quiet --detach "$HEAD_SHA"
-          git commit --quiet --message "chore: Set the plugin's version to $(jq --raw-output .version .claude-plugin/plugin.json)" .claude-plugin/plugin.json
+          git commit --quiet --message "chore: Set the plugin's version to $version" .claude-plugin/plugin.json
           if ! git push --quiet origin "HEAD:refs/heads/$BRANCH"; then
-            echo "::error file=.claude-plugin/plugin.json::Plugin's version must be $(jq --raw-output .version .claude-plugin/plugin.json)"
+            echo "::error file=.claude-plugin/plugin.json::Plugin's version must be $version"
             exit 1
           fi
-          # The push starts no workflows, since it uses the workflow's token.
-          gh workflow run ci.yml --ref "$BRANCH"
-          gh workflow run release.yml --ref "$BRANCH"
+        env:
+          BRANCH: ${{ github.head_ref }}
 
   release:
     if: github.event_name == 'push'
