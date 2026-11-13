@@ -10,6 +10,17 @@ on:
 permissions: {}
 
 jobs:
+  title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
   version:
     # Edits to a closed pull request would otherwise push the version to its deleted branch.
     if: github.event.pull_request.state == 'open'
@@ -36,14 +47,6 @@ jobs:
         # The job can push, so none of the dependencies' install scripts may run. semantic-release needs none.
         run: npm ci --ignore-scripts
 
-      - name: Require the pull request's title to follow Conventional Commits
-        run: |
-          pattern='^[a-z]+(\([a-z0-9-]+\))?!?: [^ ]'
-          if [[ ! "$TITLE" =~ $pattern ]]; then
-            echo "::error::Pull request's title must follow Conventional Commits (got \"$TITLE\")"
-            exit 1
-          fi
-
       - name: Set the plugin's version to that of the release that squashing the pull request would make
         run: |
           git config user.name "github-actions[bot]"
@@ -52,6 +55,9 @@ jobs:
           git tag "v$(git show "origin/$BASE:.claude-plugin/plugin.json" | jq --raw-output .version)" "origin/$BASE" 2>/dev/null || true
           message="$(printf '%s (#%s)\n\n%s' "$TITLE" "$PULL_REQUEST" "$BODY")"
           git switch --quiet --force-create "$BASE" "$(git commit-tree "$HEAD_SHA^{tree}" -p "origin/$BASE" -m "$message")"
+          # Undo any version that CI set before the title changed to a type that doesn't release.
+          version="$(git show "$(git merge-base "origin/$BASE" "$HEAD_SHA"):.claude-plugin/plugin.json" | jq --raw-output .version)"
+          jq --arg version "$version" '.version = $version' .claude-plugin/plugin.json > plugin.json.tmp && mv plugin.json.tmp .claude-plugin/plugin.json
           # Without GitHub Actions' variables, semantic-release takes the branch from git, rather than the pull request's.
           env -u GITHUB_ACTIONS npm exec --no -- semantic-release --dry-run
         env:
