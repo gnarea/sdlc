@@ -15,7 +15,7 @@
     "test:evals": "uv run --locked python -I -B -m unittest discover --start-directory evals/runner --top-level-directory evals/runner"
   },
   "devDependencies": {
-    "@anthropic-ai/claude-code": "2.1.317",
+    "@anthropic-ai/claude-code": "2.1.319",
     "@cspell/dict-en-common-misspellings": "2.2.5",
     "@cspell/dict-en-gb-ise": "1.0.38",
     "@semantic-release/exec": "7.1.0",
