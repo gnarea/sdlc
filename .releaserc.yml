@@ -1,0 +1,13 @@
+preset: conventionalcommits
+plugins:
+  - "@semantic-release/commit-analyzer"
+  - "@semantic-release/release-notes-generator"
+  - - "@semantic-release/exec"
+    - # Runs in dry runs too, which is how pull requests get their version.
+      verifyReleaseCmd: jq --arg version ${nextRelease.version} '.version = $version' .claude-plugin/plugin.json > plugin.json.tmp && mv plugin.json.tmp .claude-plugin/plugin.json
+      # Skipped in dry runs, so it only refuses to release a version that the pull request didn't set.
+      prepareCmd: git diff --exit-code -- .claude-plugin/plugin.json
+  - - "@semantic-release/github"
+    - # The release job can't write to issues or pull requests.
+      successCommentCondition: false
+      failCommentCondition: false
