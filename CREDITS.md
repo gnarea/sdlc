@@ -12,6 +12,13 @@ The `programmer` agent and the `programming` skill build on [what I strive for a
 
 The `architect` agent and the `systems-architecture` skill build on [what I strive for as a systems architect](https://github.com/gnarea/sdlc/issues/14#issuecomment-6507178257), from my work at Relaycorp.
 
+The skill's CI/CD guidance also builds on:
+
+- OWASP's [Top 10 CI/CD Security Risks](https://owasp.org/projects/top-10-cicd-security-risks).
+- [SLSA](https://slsa.dev/spec/v1.1/requirements)'s build requirements.
+- Adnan Khan's [The Monsters in Your Build Cache](https://adnanthekhan.com/2024/05/06/the-monsters-in-your-build-cache-github-actions-cache-poisoning/).
+- Amazon's [Automating safe, hands-off deployments](https://builder.aws.com/content/3ErTKQOTKc5NIw031UePBPxTQ6I/automating-safe-hands-off-deployments).
+
 ## Protocol design
 
 The `protocol-design` skill builds on [what I strive for as a protocol designer](https://github.com/gnarea/sdlc/issues/14#issuecomment-6507178503), from my work at Relaycorp.

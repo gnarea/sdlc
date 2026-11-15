@@ -1,6 +1,6 @@
 ---
 name: systems-architecture
-description: How to design systems beyond the boundary of the OS process. Scope, decomposition, data, messaging, failure, backing services, security and privacy, impact on others, operability, and integration testing. Use when designing, changing, or reviewing a system's architecture or its infrastructure code.
+description: How to design systems beyond the boundary of the OS process. Scope, decomposition, data, messaging, failure, backing services, security and privacy, impact on others, operability, and integration testing. Use when designing, changing, or reviewing a system's architecture, its infrastructure code, or its CI/CD pipelines.
 ---
 # Systems architecture
 
@@ -129,6 +129,8 @@ Where anonymity or deniability is a requirement:
 - [Cryptography](references/cryptography.md): The design authenticates or checks the integrity of data, issues credentials, or uses a cryptographic primitive (e.g., hashing, signing, encryption), a key, or a value that has to be unpredictable (e.g., a nonce).
   - [Approved cryptography](assets/approved-cryptography.md): The design picks a cryptographic algorithm, scheme, protocol, or library.
 - [Cloud infrastructure](references/cloud-infrastructure.md): The change provisions or alters infrastructure at a cloud provider.
+- [Continuous integration](references/continuous-integration.md): The change creates or alters a pipeline, whether it checks changes or delivers artefacts.
+- [Continuous delivery](references/continuous-delivery.md): The change alters how an artefact is released, published, or deployed (e.g., a library to a registry, an app to a store, infrastructure to a cloud).
 - [Documenting a system's architecture](references/documentation.md): The design, or a change to it, is being documented or specified.
 
 See also the `protocol-design` skill when designing or altering a protocol, or a protocol specification.
