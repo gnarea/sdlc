@@ -18,6 +18,12 @@ updates:
       default-days: 7
     commit-message:
       prefix: chore
+    ignore:
+      # Preset 10 only renders with conventional-changelog-writer 9 or newer, but the stable semantic-release plugins
+      # depend on writer 8 (https://github.com/semantic-release/release-notes-generator/issues/1027).
+      # Lift this once their stable majors declare the preset themselves, as their betas do.
+      - dependency-name: conventional-changelog-conventionalcommits
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: uv
     directory: /
