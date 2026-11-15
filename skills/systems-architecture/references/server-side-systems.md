@@ -34,7 +34,8 @@ Where the system serves more than one _tenant_ (e.g., each customer organisation
 ## Delivery
 
 - CI MUST deploy the artefact to a local stand-in for the production platform (e.g., a local Kubernetes cluster where production runs on a managed one), and run the functional tests against it.
-- Before a release reaches every user, it MUST be verified in a staging environment, whatever form that takes (e.g., a replica of production that runs the same artefact with its own data and resources, or a portion of production's clients), and MUST only be promoted once it passes there (e.g., automated tests, the health of that portion).
+- Before a release reaches production, it MUST be verified in a staging environment that runs the same artefact with its own data and resources, and MUST only be promoted once it passes there (e.g., its automated tests).
+- A release SHOULD reach a portion of production's clients first (aka _progressive delivery_), and only reach the rest once it's healthy there (e.g., its error rate hasn't risen).
 - A deployment that degrades the service (e.g., by raising its error rate) SHOULD be rolled back automatically.
 
 ## Data

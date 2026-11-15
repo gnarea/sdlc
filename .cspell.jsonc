@@ -78,6 +78,7 @@
     "plugins",
     "PMBOK",
     "prototyper",
+    "Pulumi",
     "pyproject",
     "Redis",
     "refactorings",
