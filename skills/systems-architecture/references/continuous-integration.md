@@ -14,7 +14,7 @@ These apply whether the pipeline checks a change or delivers an artefact.
 - Text that an untrusted party controls (e.g., a pull request's title, a branch's name) MUST be passed to scripts as data, never interpolated into their code, and the scripts MUST validate it before using it.
 - Whatever holds a credential MUST only run the code that it needs, so that a compromised dependency that's merely installed can't use the credential. In particular, it MUST NOT run its dependencies' install scripts where the package manager can skip them (e.g., with npm's `--ignore-scripts`).
 - A pipeline MUST NOT leak a secret, whether through its logs, its caches, or the files that it uploads or publishes.
-- A pipeline SHOULD only be able to reach the hosts that it needs (e.g., the registries that it pulls from and publishes to), so that a compromised dependency can't send a secret or the code anywhere else.
+- A pipeline MUST only be able to reach the hosts that it needs (e.g., the registries that it pulls from and publishes to), so that a compromised dependency can't send a secret or the code anywhere else.
 - Everything that a pipeline runs MUST have a timeout.
 - Scripts MUST stop at the first error (e.g., with strict mode in shell scripts).
 - A pipeline MUST NOT wait for a fixed delay: whatever waits for something to happen (e.g., a service to start, an emulator to boot) MUST wait for it to signal that it has.
