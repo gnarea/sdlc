@@ -31,6 +31,13 @@ Where the system serves more than one _tenant_ (e.g., each customer organisation
 - Content that is the same for every client SHOULD be served from a managed store (e.g., an object store) and cached at the proxy, so that a flood of requests never reaches our compute.
 - The number of instances MUST be capped, so that an attack can't scale the bill without bound.
 
+## Delivery
+
+- CI MUST deploy the artefact to a local stand-in for the production platform (e.g., a local Kubernetes cluster where production runs on a managed one), and run the functional tests against it.
+- Before a release reaches production, it MUST be verified in a staging environment that runs the same artefact with its own data and resources, and MUST only be promoted once it passes there (e.g., its automated tests).
+- A release SHOULD reach a portion of production's clients first (aka _progressive delivery_), and only reach the rest once it's healthy there (e.g., its error rate hasn't risen).
+- A deployment that degrades the service (e.g., by raising its error rate) SHOULD be rolled back automatically.
+
 ## Data
 
 - Indices MUST be specified with the schema, including the uniqueness constraints that make retries safe and the expiry that enforces retention.

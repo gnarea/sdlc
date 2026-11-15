@@ -44,6 +44,7 @@ description: How code should be written regardless of language. Code organisatio
 ## Error handling
 
 - Failures that the caller is expected to reason about MUST be returned as values (e.g., a result type carrying the reason). Programming errors and protocol violations MUST be raised.
+- Scripts MUST stop at the first error (e.g., with `set -euo pipefail` in Bash).
 - The cause MUST always be chained. Discarding a cause MUST be syntactically deliberate.
 - Third-party errors MUST NOT escape the module that provoked them: catch them and re-raise them in the module's own vocabulary.
 - A failure MUST be logged where its outcome is decided, and MUST NOT be logged again at each level it propagates through.
