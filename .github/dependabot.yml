@@ -19,9 +19,10 @@ updates:
     commit-message:
       prefix: chore
     ignore:
-      # Preset 10 only renders with conventional-changelog-writer 9 or newer, but the stable semantic-release plugins
-      # depend on writer 8 (https://github.com/semantic-release/release-notes-generator/issues/1027).
-      # Lift this once their stable majors declare the preset themselves, as their betas do.
+      # Preset 10 only renders with conventional-changelog-writer 9 or newer, but the plugins that semantic-release 25
+      # installs depend on writer 8 (https://github.com/semantic-release/release-notes-generator/issues/1027).
+      # Once a stable release of semantic-release installs plugins that depend on the preset themselves, as the betas
+      # of 26 do, remove this rule and the preset from `devDependencies`.
       - dependency-name: conventional-changelog-conventionalcommits
         update-types: ["version-update:semver-major"]
 
