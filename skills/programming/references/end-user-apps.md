@@ -4,7 +4,7 @@ Software installed on a device that the user controls. The device is neither tru
 
 ## General
 
-- Packages MUST be organised layer-first — domain, data, user interface, background work, and dependency injection — and the layout MUST be documented in the README.
+- Packages MUST be organised layer-first — domain, data, user interface, background work, and dependency injection.
 - Functional tests MUST run on a matrix of real and virtual devices, spanning the oldest and the newest supported operating system versions.
 - The product's vocabulary MUST be used in the user interface, and the domain's in the code, where the two differ. The mapping MUST be documented.
 

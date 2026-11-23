@@ -6,7 +6,7 @@ description: How code should be written regardless of language. Code organisatio
 
 ## Code organisation
 
-- Modules MUST be partitioned by responsibility, using whichever decomposition is idiomatic for the software and its stack (e.g., layers such as domain, data, and UI in an application; capabilities in a library). The chosen decomposition MUST be applied uniformly, and MUST be documented in the README.
+- Modules MUST be partitioned by responsibility, using whichever decomposition is idiomatic for the software and its stack (e.g., layers such as domain, data, and UI in an application; capabilities in a library). The chosen decomposition MUST be applied uniformly, and MUST be documented.
 - Files SHOULD NOT exceed 800 LOC, including comments and blank lines. A file of 1 kLOC or more MUST be treated as a defect to fix.
 - Everything that isn't part of a module's contract MUST use the strictest visibility the language offers.
 - Entrypoints (e.g., `main`) MUST contain no logic of their own: they wire dependencies together and delegate.
