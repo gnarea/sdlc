@@ -22,7 +22,7 @@
     "conventional-changelog-conventionalcommits": "9.3.1",
     "cspell": "10.4.1",
     "markdownlint-cli2": "0.24.0",
-    "semantic-release": "25.0.9"
+    "semantic-release": "26.0.1"
   },
   "allowScripts": {
     "@anthropic-ai/claude-code": true
